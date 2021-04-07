@@ -1,10 +1,10 @@
-import {createMenuTemplate} from './view/menu.js';
-import {createFilters} from './view/filters.js';
-import {createTripInfoTemplate} from './view/trip-info.js';
-import {createSortingTemplate} from './view/sorting.js';
-import {createEditingFormTemplate} from './view/editing-form.js';
-import {createWaypointTemplate} from './view/waypoint.js';
-import {createCreatingFormTemplate} from './view/creating-form.js';
+import {getMenuTemplate} from './view/menu.js';
+import {getFiltersTemplate} from './view/filters.js';
+import {getTripInfoTemplate} from './view/trip-info.js';
+import {getSortingTemplate} from './view/sorting.js';
+import {getEditingFormTemplate} from './view/editing-form.js';
+import {getWaypointTemplate} from './view/waypoint.js';
+import {getCreatingFormTemplate} from './view/creating-form.js';
 
 const WAYPOINT_COUNT = 3;
 
@@ -14,24 +14,24 @@ const filterElement = headerContainer.querySelector('.trip-controls__filters');
 const tripInfoBlock = headerContainer.querySelector('.trip-main');
 const tripEventsContainer = document.querySelector('.trip-events');
 
-const renderTemplate = (container, template, place) => {
+const renderTemplate = (container, template, place = 'beforeend') => {
   container.insertAdjacentHTML(place, template);
 };
 
-renderTemplate(menuElement, createMenuTemplate(),'beforeend');
+renderTemplate(menuElement, getMenuTemplate());
 
-renderTemplate(filterElement, createFilters(),'beforeend');
+renderTemplate(filterElement, getFiltersTemplate());
 
-renderTemplate(tripInfoBlock, createTripInfoTemplate(),'afterbegin');
+renderTemplate(tripInfoBlock, getTripInfoTemplate(),'afterbegin');
 
-renderTemplate(tripEventsContainer, createSortingTemplate(),'afterbegin');
+renderTemplate(tripEventsContainer, getSortingTemplate(),'afterbegin');
 
-renderTemplate(tripEventsContainer, createEditingFormTemplate(),'beforeend');
+renderTemplate(tripEventsContainer, getEditingFormTemplate());
 
 for (let i = 0; i < WAYPOINT_COUNT; i++) {
-  renderTemplate(tripEventsContainer, createWaypointTemplate(),'beforeend');
+  renderTemplate(tripEventsContainer, getWaypointTemplate());
 }
 
-renderTemplate(tripEventsContainer, createCreatingFormTemplate(),'beforeend');
+renderTemplate(tripEventsContainer, getCreatingFormTemplate());
 
 

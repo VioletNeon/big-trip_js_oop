@@ -1,4 +1,4 @@
-const createFilters = () => {
+const getFiltersTemplate = () => {
   return `
     <form class="trip-filters" action="#" method="get">
       <div class="trip-filters__filter">
@@ -20,4 +20,4 @@ const createFilters = () => {
     </form>`;
 };
 
-export {createFilters};
+export {getFiltersTemplate};

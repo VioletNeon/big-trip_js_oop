@@ -1,4 +1,4 @@
-const createWaypointTemplate = () => {
+const getWaypointTemplate = () => {
   return `
     <li class="trip-events__item">
       <div class="event">
@@ -39,4 +39,4 @@ const createWaypointTemplate = () => {
     </li>`;
 };
 
-export {createWaypointTemplate};
+export {getWaypointTemplate};

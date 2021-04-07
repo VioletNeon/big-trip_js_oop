@@ -1,4 +1,4 @@
-const createSortingTemplate = () => {
+const getSortingTemplate = () => {
   return `
     <form class="trip-events__trip-sort  trip-sort" action="#" method="get">
       <div class="trip-sort__item  trip-sort__item--day">
@@ -28,4 +28,4 @@ const createSortingTemplate = () => {
     </form>`;
 };
 
-export {createSortingTemplate};
+export {getSortingTemplate};

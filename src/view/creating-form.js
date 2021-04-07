@@ -1,4 +1,4 @@
-const createCreatingFormTemplate = () => {
+const getCreatingFormTemplate = () => {
   return `
     <form class="event event--edit" action="#" method="post">
     <header class="event__header">
@@ -151,4 +151,4 @@ const createCreatingFormTemplate = () => {
     </form>`;
 };
 
-export {createCreatingFormTemplate};
+export {getCreatingFormTemplate};
