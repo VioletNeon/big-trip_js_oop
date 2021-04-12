@@ -1,32 +1,82 @@
-const getWaypointTemplate = () => {
+import dayjs from 'dayjs';
+
+const changeDateFormat = (date, dateFormat) => {
+  return dayjs(date).format(dateFormat);
+};
+
+const capitalizeFirstLetter = (string) => {
+  if (!string) return string;
+
+  return string[0].toUpperCase() + string.slice(1);
+};
+
+const getDuration = (dateFrom, dateTo) => {
+  let minutes = dayjs(dateTo).diff(dateFrom, 'm');
+  let hours = dayjs(dateTo).diff(dateFrom, 'h');
+  const days = dayjs(dateTo).diff(dateFrom, 'd');
+  if (days) {
+    hours = hours % 24;
+    minutes = minutes % 60;
+    return `${days}D ${hours}H ${minutes}M`;
+  } else if (hours) {
+    minutes = minutes % 60;
+    return `${hours}H ${minutes}M`;
+  }
+  return `${minutes}M`;
+};
+
+const generateOfferTemplate = (offers) => {
+  const offerTemplates = offers.map(({title, price}) => {
+    return `<li class="event__offer">
+      <span class="event__offer-title">${title}</span>
+      &plus;&euro;&nbsp;
+      <span class="event__offer-price">${price}</span>
+    </li>`;
+  });
+  return offerTemplates.join(' ');
+};
+
+const getFavoriteMark = (isFavorite) => {
+  return isFavorite ? '--active' : '';
+};
+
+const getWaypointTemplate = (point) => {
+  const {type, dateFrom, dateTo, basePrice, destination, isFavorite, offers} = point;
+  const eventDateAttributeFormat = changeDateFormat(dateFrom, 'YYYY-MM-DD');
+  const eventDateTimeFormat = changeDateFormat(dateFrom, 'MMM DD');
+  const typeWaypoint = capitalizeFirstLetter(type);
+  const eventStartDateAttributeFormat = changeDateFormat(dateFrom, 'YYYY-MM-DDTHH:mm');
+  const eventStartDateTimeFormat = changeDateFormat(dateFrom, 'HH:mm');
+  const eventEndDateAttributeFormat = changeDateFormat(dateTo, 'YYYY-MM-DDTHH:mm');
+  const eventEndDateTimeFormat = changeDateFormat(dateTo, 'HH:mm');
+  const eventDuration = getDuration(dateFrom, dateTo);
+  const selectedOffers = generateOfferTemplate(offers);
+  const favoritePoint = getFavoriteMark(isFavorite);
+
   return `
     <li class="trip-events__item">
       <div class="event">
-        <time class="event__date" datetime="2019-03-18">MAR 18</time>
+        <time class="event__date" datetime="${eventDateAttributeFormat}">${eventDateTimeFormat}</time>
         <div class="event__type">
-          <img class="event__type-icon" width="42" height="42" src="img/icons/taxi.png" alt="Event type icon">
+          <img class="event__type-icon" width="42" height="42" src="img/icons/${type}.png" alt="Event type icon">
         </div>
-        <h3 class="event__title">Taxi Amsterdam</h3>
+        <h3 class="event__title">${typeWaypoint} ${destination}</h3>
         <div class="event__schedule">
           <p class="event__time">
-            <time class="event__start-time" datetime="2019-03-18T10:30">10:30</time>
+            <time class="event__start-time" datetime="${eventStartDateAttributeFormat}">${eventStartDateTimeFormat}</time>
             &mdash;
-            <time class="event__end-time" datetime="2019-03-18T11:00">11:00</time>
+            <time class="event__end-time" datetime="${eventEndDateAttributeFormat}">${eventEndDateTimeFormat}</time>
           </p>
-          <p class="event__duration">30M</p>
+          <p class="event__duration">${eventDuration}</p>
         </div>
         <p class="event__price">
-          &euro;&nbsp;<span class="event__price-value">20</span>
+          &euro;&nbsp;<span class="event__price-value">${basePrice}</span>
         </p>
         <h4 class="visually-hidden">Offers:</h4>
         <ul class="event__selected-offers">
-          <li class="event__offer">
-            <span class="event__offer-title">Order Uber</span>
-            &plus;&euro;&nbsp;
-            <span class="event__offer-price">20</span>
-          </li>
+          ${selectedOffers}
         </ul>
-        <button class="event__favorite-btn event__favorite-btn--active" type="button">
+        <button class="event__favorite-btn event__favorite-btn${favoritePoint}" type="button">
           <span class="visually-hidden">Add to favorite</span>
           <svg class="event__favorite-icon" width="28" height="28" viewBox="0 0 28 28">
             <path d="M14 21l-8.22899 4.3262 1.57159-9.1631L.685209 9.67376 9.8855 8.33688 14 0l4.1145 8.33688 9.2003 1.33688-6.6574 6.48934 1.5716 9.1631L14 21z"/>
