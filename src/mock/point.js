@@ -1,31 +1,13 @@
 import dayjs from 'dayjs';
+import {getRandomItems, getRandomItem, getRandomInteger, checkOfferTypes} from './utils.js';
 
 const MAX_OFFER_PRICE = 200;
 const ARRAY_LENGTH_ITEM = 5;
 const MAX_POINT_COST = 100;
 const MIN_POINT_COST = 10;
 const MAX_ID_ITEM = 999;
-const SOME_POINT_COUNT = 15;
 
-const getRandomInteger = (from = 0, to = 1, pointer = 0) => {
-  [from, to, pointer] = [Math.abs(from), Math.abs(to), Math.abs(pointer)];
-  if (from >= to) {
-    [from, to] = [to, from];
-  }
-  return +(Math.random() * Math.abs(to - from) + from).toFixed(pointer);
-};
-
-const getRandomItems = (array, arrayLength = array.length) => {
-  return array.sort(() => { return Math.random() - 0.5; }).slice(0, getRandomInteger(0, arrayLength));
-};
-
-const getRandomItem = (someArray) => {
-  const randomIndex = getRandomInteger(0, someArray.length - 1);
-
-  return someArray[randomIndex];
-};
-
-const POINT_TYPES = [
+const pointTypes = [
   'taxi',
   'bus',
   'train',
@@ -38,7 +20,7 @@ const POINT_TYPES = [
   'restaurant',
 ];
 
-const POINT_DESCRIPTIONS = [
+const pointDescriptions = [
   'Lorem ipsum dolor sit amet, consectetur adipiscing elit.',
   'Cras aliquet varius magna, non porta ligula feugiat eget.',
   'Fusce tristique felis at fermentum pharetra.',
@@ -51,7 +33,7 @@ const POINT_DESCRIPTIONS = [
   'In rutrum ac purus sit amet tempus.',
 ];
 
-const POINT_NAMES = [
+const pointNames = [
   'Amsterdam',
   'Geneva',
   'Chamonix',
@@ -140,34 +122,35 @@ const generateDate = () => {
   };
 };
 
-const dateFrom = generateDate();
+const dateItem = generateDate();
 
-const generatePoint = () => {
-  const type = getRandomItem(POINT_TYPES);
-  const destination = {
-    description: getRandomItems(POINT_DESCRIPTIONS, ARRAY_LENGTH_ITEM),
-    name: getRandomItem(POINT_NAMES),
-    pictures: getRandomItems(pointPictures),
-  };
-  const offer = {
-    type,
+const offersPoint = pointTypes.map((item) => {
+  return {
+    type: item,
     offers: getRandomItems(pointOffers, ARRAY_LENGTH_ITEM),
   };
+});
 
+const destinations = pointNames.map((item) => {
+  return {
+    description: getRandomItems(pointDescriptions, ARRAY_LENGTH_ITEM),
+    name: item,
+    pictures: getRandomItems(pointPictures),
+  };
+});
+
+const generatePoint = () => {
+  const type = getRandomItem(pointTypes);
   return {
     basePrice: getRandomInteger(MIN_POINT_COST, MAX_POINT_COST),
-    dateFrom: dateFrom(),
-    dateTo: dateFrom(),
-    type,
-    destination: destination.name,
+    dateFrom: dateItem(),
+    dateTo: dateItem(),
+    type: type,
+    destination: getRandomItem(destinations),
     isFavorite: Boolean(getRandomInteger()),
-    offers: offer.offers,
+    offers: checkOfferTypes(type, offersPoint),
     id: getIdentifier(),
   };
 };
 
-const getPoints = () => {
-  return new Array(SOME_POINT_COUNT).fill(null).map(() => {return generatePoint();});
-};
-
-export {getPoints};
+export {generatePoint, offersPoint, destinations};
