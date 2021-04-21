@@ -9,7 +9,11 @@ const getRandomInteger = (from = 0, to = 1, pointer = 0) => {
 };
 
 const getRandomItems = (array, arrayLength = array.length) => {
-  return array.sort(() => { return Math.random() - 0.5; }).slice(0, getRandomInteger(0, arrayLength));
+  for (let i = array.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [array[i], array[j]] = [array[j], array[i]];
+  }
+  return array.slice(0, getRandomInteger(0, arrayLength));
 };
 
 const getRandomItem = (someArray) => {

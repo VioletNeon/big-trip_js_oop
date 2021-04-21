@@ -2,15 +2,18 @@ import {getMenuTemplate} from './view/menu.js';
 import {getFiltersTemplate} from './view/filters.js';
 import {getTripInfoTemplate} from './view/trip-info.js';
 import {getSortingTemplate} from './view/sorting.js';
-import {getEditingFormTemplate, getPictureTemplate} from './view/editing-form.js';
+import {getEditingFormTemplate} from './view/editing-form.js';
 import {getWaypointTemplate} from './view/waypoint.js';
 import {getCreatingFormTemplate} from './view/creating-form.js';
 import {generatePoint, offersPoint, destinations} from './mock/point.js';
-import {checkOfferTypes} from './mock/utils.js';
-import flatpickr from 'flatpickr';
+import {checkOfferTypes} from './view/utils.js';
+import {getOfferTemplate} from './view/get-offer-template';
+import {getDestinationTemplate} from './view/get-destination-template';
+import {setCalendarFormInput} from './view/set-calendar-form-input';
 
 const WAYPOINT_COUNT = 15;
-const tripPoints = new Array(WAYPOINT_COUNT).fill(null).map(() => {return generatePoint();});
+const tripPoints = new Array(WAYPOINT_COUNT).fill(null).map(() => generatePoint());
+const firstEditedPoint = tripPoints[0];
 
 const headerContainer = document.querySelector('.page-header__container');
 const tripNavigation = headerContainer.querySelector('.trip-controls__navigation');
@@ -33,82 +36,21 @@ renderTemplate(tripEventsContainer, tripEventsListTemplate);
 const tripEventsList = document.querySelector('.trip-events__list');
 const tripSort = document.querySelector('.trip-sort');
 
-const renderAllWayPoints = () => {
-  for (let i = 0; i < WAYPOINT_COUNT; i++) {
-    renderTemplate(tripEventsList, getWaypointTemplate(tripPoints[i]));
-  }
+const renderAllWaypoints = (points) => {
+  points.forEach((point) => renderTemplate(tripEventsList, getWaypointTemplate(point)));
 };
 
-renderAllWayPoints();
-
-renderTemplate(tripEventsList, getEditingFormTemplate(tripPoints[0], destinations, offersPoint), 'afterbegin');
-
-const setCalendarFormInput = () => {
-  const eventTimeInput = document.querySelectorAll('.event__input--time');
-  if (eventTimeInput.length > 0) {
-    eventTimeInput.forEach((item) => {
-      flatpickr(item, {
-        enableTime: true,
-        dateFormat: 'y/m/d H:i',
-      });
-    });
-  }
-};
+renderAllWaypoints(tripPoints);
+renderTemplate(tripEventsList, getEditingFormTemplate(firstEditedPoint, destinations, offersPoint), 'afterbegin');
 
 setCalendarFormInput();
 
-const getOfferTemplate = (typeOffers) => {
-  const availableOffers = document.querySelector('.event__available-offers');
-  const sectionOffers = document.querySelector('.event__section--offers');
-  sectionOffers.classList.remove('visually-hidden');
-  availableOffers.innerHTML = '';
-  if (typeOffers.length > 0) {
-    const templates = typeOffers.map(({title, price}) => {
-      const offerTitle = [title].join('-');
-      return `
-      <div class="event__offer-selector">
-        <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offerTitle}-1" type="checkbox" name="event-offer-${offerTitle}">
-        <label class="event__offer-label" for="event-offer-${offerTitle}-1">
-          <span class="event__offer-title">${title}</span>
-          &plus;&euro;&nbsp;
-          <span class="event__offer-price">${price}</span>
-        </label>
-      </div>`;
-    });
-    availableOffers.innerHTML = `${templates.join(' ')}`;
-  } else {
-    sectionOffers.classList.add('visually-hidden');
-  }
-};
-
-const getDestinationTemplate = (destination) => {
-  const sectionDestination = document.querySelector('.event__section--destination');
-  sectionDestination.classList.remove('visually-hidden');
-  sectionDestination.innerHTML = '';
-  const {description, pictures} = destination;
-  const destinationPictures = getPictureTemplate(pictures);
-  if (description.length > 0 || destinationPictures.length > 0) {
-    const template = `
-      <h3 class="event__section-title  event__section-title--destination">Destination</h3>
-      <p class="event__destination-description ${description ? '' : 'visually-hidden'}">${description.join(' ')}</p>
-
-      <div class="event__photos-container ${destinationPictures ? '' : 'visually-hidden'}">
-        <div class="event__photos-tape">
-          ${destinationPictures}
-        </div>
-      </div>`;
-    sectionDestination.innerHTML = `${template}`;
-  } else {
-    sectionDestination.classList.add('visually-hidden');
-  }
-};
-
 const inputEventDestination = document.querySelector('.event__input--destination');
-const typeGroup = document.querySelector('.event__type-group');
+const groupType = document.querySelector('.event__type-group');
 
-const checkDestinationNameTypes = (optionName, destination) => {
-  for (const {name, description, pictures} of destination) {
-    if (name === optionName) {
+const getSelectedDestinationDate = (selectedDestinationName, destinations) => {
+  for (const {name, description, pictures} of destinations) {
+    if (selectedDestinationName === name) {
       return {description, pictures};
     }
   }
@@ -124,25 +66,25 @@ const callbackChangeOfferTemplate = (evt) => {
 };
 
 const callbackChangeDestinationTemplate = (evt) => {
-  const destination = checkDestinationNameTypes(evt.target.value, destinations);
+  const destination = getSelectedDestinationDate(evt.target.value, destinations);
   getDestinationTemplate(destination);
 };
 
-typeGroup.addEventListener('change', callbackChangeOfferTemplate);
+groupType.addEventListener('change', callbackChangeOfferTemplate);
 inputEventDestination.addEventListener('change', callbackChangeDestinationTemplate);
 
-const callbackClickNewPointButton = () => {
-  typeGroup ? typeGroup.removeEventListener('change', callbackChangeOfferTemplate) : '';
-  inputEventDestination ? inputEventDestination.removeEventListener('change', callbackChangeDestinationTemplate) : '';
+const newPointButtonClickHandler = () => {
+  if (groupType) {groupType.removeEventListener('change', callbackChangeOfferTemplate);}
+  if (inputEventDestination) {inputEventDestination.removeEventListener('change', callbackChangeDestinationTemplate);}
   tripEventsList.innerHTML = '';
-  renderAllWayPoints();
+  renderAllWaypoints(tripPoints);
   renderTemplate(tripSort, getCreatingFormTemplate(offersPoint, destinations), 'afterend');
   const inputDestination = document.querySelector('.event__input--destination');
-  const eventTypeGroup = document.querySelector('.event__type-group');
-  eventTypeGroup.addEventListener('change', callbackChangeOfferTemplate);
+  const creatingFormGroutType = document.querySelector('.event__type-group');
+  creatingFormGroutType.addEventListener('change', callbackChangeOfferTemplate);
   inputDestination.addEventListener('change', callbackChangeDestinationTemplate);
   setCalendarFormInput();
   newPointButton.disabled = 'disabled';
 };
 
-newPointButton.addEventListener('click', callbackClickNewPointButton);
+newPointButton.addEventListener('click', newPointButtonClickHandler);

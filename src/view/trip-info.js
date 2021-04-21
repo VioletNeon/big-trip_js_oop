@@ -1,4 +1,4 @@
-import {changeDateFormat, dayjs} from '../mock/utils.js';
+import {changeDateFormat, dayjs} from './utils.js';
 
 const POINTS_TRIP_SIZE = 3;
 

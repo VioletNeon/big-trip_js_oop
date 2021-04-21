@@ -1,11 +1,10 @@
 import dayjs from 'dayjs';
-import {getRandomItems, getRandomItem, getRandomInteger, checkOfferTypes} from './utils.js';
+import {getRandomItems, getRandomItem, getRandomInteger, checkOfferTypes} from '../view/utils.js';
 
 const MAX_OFFER_PRICE = 200;
 const ARRAY_LENGTH_ITEM = 5;
 const MAX_POINT_COST = 100;
 const MIN_POINT_COST = 10;
-const MAX_ID_ITEM = 999;
 
 const pointTypes = [
   'taxi',
@@ -97,16 +96,12 @@ const pointPictures = [
   },
 ];
 
-const pointIdentifiers = new Set();
-
 const getIdentifier = () => {
-  const id = getRandomInteger(0, MAX_ID_ITEM);
-  if (!pointIdentifiers.has(id)) {
-    pointIdentifiers.add(id);
-    return id;
-  }
-  getIdentifier();
+  let id = 0;
+  return () => id++;
 };
+
+const pointIdentifier = getIdentifier();
 
 const generateDate = () => {
   const maxDayGap = 6;
@@ -133,7 +128,7 @@ const offersPoint = pointTypes.map((item) => {
 
 const destinations = pointNames.map((item) => {
   return {
-    description: getRandomItems(pointDescriptions, ARRAY_LENGTH_ITEM),
+    description: getRandomItems(pointDescriptions, ARRAY_LENGTH_ITEM).join(' '),
     name: item,
     pictures: getRandomItems(pointPictures),
   };
@@ -149,7 +144,7 @@ const generatePoint = () => {
     destination: getRandomItem(destinations),
     isFavorite: Boolean(getRandomInteger()),
     offers: checkOfferTypes(type, offersPoint),
-    id: getIdentifier(),
+    id: pointIdentifier(),
   };
 };
 

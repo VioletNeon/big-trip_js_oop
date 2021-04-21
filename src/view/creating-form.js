@@ -1,4 +1,4 @@
-import {capitalizeFirstLetter} from '../mock/utils.js';
+import {capitalizeFirstLetter} from './utils.js';
 
 const getCreatingFormTemplate = (offers, destinations) => {
   const names = destinations.map(({name}) => name);

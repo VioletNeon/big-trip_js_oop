@@ -1,4 +1,4 @@
-import {changeDateFormat, capitalizeFirstLetter} from '../mock/utils.js';
+import {changeDateFormat, capitalizeFirstLetter} from './utils.js';
 
 const getOfferTemplate = (pointOffers) => {
   if (pointOffers) {
@@ -21,10 +21,7 @@ const getOfferTemplate = (pointOffers) => {
 
 const getPictureTemplate = (pictures) => {
   if (pictures) {
-    const templates = pictures.map(({src, description}) => {
-      return `
-      <img class="event__photo" src="${src}" alt="${description}">`;
-    });
+    const templates = pictures.map(({src, description}) => `<img class="event__photo" src="${src}" alt="${description}">`);
     return templates.join(' ');
   }
   return '';
@@ -102,9 +99,9 @@ const getEditingFormTemplate = (point, destinations, offerTypes) => {
           </div>
         </section>
 
-        <section class="event__section  event__section--destination ${description.length > 0 || pointPictures.length > 0 ? '' : 'visually-hidden'}">
+        <section class="event__section  event__section--destination ${description || pointPictures.length > 0 ? '' : 'visually-hidden'}">
           <h3 class="event__section-title  event__section-title--destination">Destination</h3>
-          <p class="event__destination-description ${description ? '' : 'visually-hidden'}">${description.join(' ')}</p>
+          <p class="event__destination-description ${description ? '' : 'visually-hidden'}">${description}</p>
 
           <div class="event__photos-container ${pointPictures ? '' : 'visually-hidden'}">
             <div class="event__photos-tape">

@@ -1,4 +1,4 @@
-import {changeDateFormat, getDuration, capitalizeFirstLetter} from '../mock/utils.js';
+import {changeDateFormat, getDuration, capitalizeFirstLetter} from './utils.js';
 
 const getWaypointTemplate = (point) => {
   const {type, dateFrom, dateTo, basePrice, destination, isFavorite, offers} = point;
