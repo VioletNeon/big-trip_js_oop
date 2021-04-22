@@ -48,7 +48,7 @@ setCalendarFormInput();
 const inputEventDestination = document.querySelector('.event__input--destination');
 const groupType = document.querySelector('.event__type-group');
 
-const getSelectedDestinationDate = (selectedDestinationName, destinations) => {
+const getSelectedDestinationData = (selectedDestinationName, destinations) => {
   for (const {name, description, pictures} of destinations) {
     if (selectedDestinationName === name) {
       return {description, pictures};
@@ -66,7 +66,7 @@ const callbackChangeOfferTemplate = (evt) => {
 };
 
 const callbackChangeDestinationTemplate = (evt) => {
-  const destination = getSelectedDestinationDate(evt.target.value, destinations);
+  const destination = getSelectedDestinationData(evt.target.value, destinations);
   getDestinationTemplate(destination);
 };
 
@@ -80,11 +80,11 @@ const newPointButtonClickHandler = () => {
   renderAllWaypoints(tripPoints);
   renderTemplate(tripSort, getCreatingFormTemplate(offersPoint, destinations), 'afterend');
   const inputDestination = document.querySelector('.event__input--destination');
-  const creatingFormGroutType = document.querySelector('.event__type-group');
-  creatingFormGroutType.addEventListener('change', callbackChangeOfferTemplate);
+  const creatingFormGroupType = document.querySelector('.event__type-group');
+  creatingFormGroupType.addEventListener('change', callbackChangeOfferTemplate);
   inputDestination.addEventListener('change', callbackChangeDestinationTemplate);
   setCalendarFormInput();
-  newPointButton.disabled = 'disabled';
+  newPointButton.disabled = true;
 };
 
 newPointButton.addEventListener('click', newPointButtonClickHandler);
