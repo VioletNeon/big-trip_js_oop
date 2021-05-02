@@ -1,26 +1,30 @@
-import {changeDateFormat, getDuration, capitalizeFirstLetter} from './utils.js';
+import {changeDateFormat, getDuration, capitalizeFirstLetter, createElement} from './utils.js';
 
-const getWaypointTemplate = (point) => {
-  const {type, dateFrom, dateTo, basePrice, destination, isFavorite, offers} = point;
-  const destinationPoint = destination.name;
-  const eventDateAttributeFormat = changeDateFormat(dateFrom, 'YYYY-MM-DD');
-  const eventDateTimeFormat = changeDateFormat(dateFrom, 'MMM DD');
-  const typeWaypoint = capitalizeFirstLetter(type);
-  const eventStartDateAttributeFormat = changeDateFormat(dateFrom, 'YYYY-MM-DDTHH:mm');
-  const eventStartDateTimeFormat = changeDateFormat(dateFrom, 'HH:mm');
-  const eventEndDateAttributeFormat = changeDateFormat(dateTo, 'YYYY-MM-DDTHH:mm');
-  const eventEndDateTimeFormat = changeDateFormat(dateTo, 'HH:mm');
-  const eventDuration = getDuration(dateFrom, dateTo);
-  const offersForSelect = offers.map(({title, price}) => {
-    return `<li class="event__offer">
+export default class Waypoint {
+  constructor(point) {
+    this._point = point;
+    this._element = null;
+  }
+
+  getTemplate() {
+    const {type, dateFrom, dateTo, basePrice, destination, isFavorite, offers} = this._point;
+    const destinationPoint = destination.name;
+    const eventDateAttributeFormat = changeDateFormat(dateFrom, 'YYYY-MM-DD');
+    const eventDateTimeFormat = changeDateFormat(dateFrom, 'MMM DD');
+    const typeWaypoint = capitalizeFirstLetter(type);
+    const eventStartDateAttributeFormat = changeDateFormat(dateFrom, 'YYYY-MM-DDTHH:mm');
+    const eventStartDateTimeFormat = changeDateFormat(dateFrom, 'HH:mm');
+    const eventEndDateAttributeFormat = changeDateFormat(dateTo, 'YYYY-MM-DDTHH:mm');
+    const eventEndDateTimeFormat = changeDateFormat(dateTo, 'HH:mm');
+    const eventDuration = getDuration(dateFrom, dateTo);
+    const offersForSelect = offers.map(({title, price}) => {
+      return `<li class="event__offer">
       <span class="event__offer-title">${title}</span>
       &plus;&euro;&nbsp;
       <span class="event__offer-price">${price}</span>
     </li>`;
-  }).join(' ');
-
-  return `
-    <li class="trip-events__item">
+    }).join(' ');
+    return `<li class="trip-events__item">
       <div class="event">
         <time class="event__date" datetime="${eventDateAttributeFormat}">${eventDateTimeFormat}</time>
         <div class="event__type">
@@ -53,6 +57,17 @@ const getWaypointTemplate = (point) => {
         </button>
       </div>
     </li>`;
-};
+  }
 
-export {getWaypointTemplate};
+  getElement() {
+    if (!this._element) {
+      this._element = createElement(this.getTemplate());
+    }
+
+    return this._element;
+  }
+
+  removeElement() {
+    this._element = null;
+  }
+}

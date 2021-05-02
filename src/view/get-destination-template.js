@@ -1,4 +1,4 @@
-import {getPictureTemplate} from './editing-form';
+import {getPictureTemplate} from './get-picture-template.js';
 
 const getDestinationTemplate = (destination) => {
   const sectionDestination = document.querySelector('.event__section--destination');

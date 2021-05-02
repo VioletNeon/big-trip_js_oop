@@ -1,19 +1,19 @@
-import {getMenuTemplate} from './view/menu.js';
-import {getFiltersTemplate} from './view/filters.js';
-import {getTripInfoTemplate} from './view/trip-info.js';
-import {getSortingTemplate} from './view/sorting.js';
-import {getEditingFormTemplate} from './view/editing-form.js';
-import {getWaypointTemplate} from './view/waypoint.js';
-import {getCreatingFormTemplate} from './view/creating-form.js';
+import SiteMenu from './view/site-menu.js';
+import Filter from './view/filter.js';
+import TripInfo from './view/trip-info.js';
+import Sort from './view/sort.js';
+import EditingForm from './view/editing-form.js';
+import Waypoint from './view/waypoint.js';
+import CreatingForm from './view/creating-form.js';
 import {generatePoint, offersPoint, destinations} from './mock/point.js';
-import {checkOfferTypes} from './view/utils.js';
+import {createElement, checkOfferTypes, renderElement, RenderPosition} from './view/utils.js';
 import {getOfferTemplate} from './view/get-offer-template';
 import {getDestinationTemplate} from './view/get-destination-template';
 import {setCalendarFormInput} from './view/set-calendar-form-input';
 
 const WAYPOINT_COUNT = 15;
 const tripPoints = new Array(WAYPOINT_COUNT).fill(null).map(() => generatePoint());
-const firstEditedPoint = tripPoints[0];
+const creatingFormComponent = new CreatingForm(offersPoint, destinations);
 
 const headerContainer = document.querySelector('.page-header__container');
 const tripNavigation = headerContainer.querySelector('.trip-controls__navigation');
@@ -23,30 +23,47 @@ const tripEventsContainer = document.querySelector('.trip-events');
 const tripEventsListTemplate = '<ul class="trip-events__list"></ul>';
 const newPointButton = document.querySelector('.trip-main__event-add-btn');
 
-const renderTemplate = (container, template, place = 'beforeend') => {
-  container.insertAdjacentHTML(place, template);
-};
-
-renderTemplate(tripNavigation, getMenuTemplate());
-renderTemplate(tripFilter, getFiltersTemplate());
-renderTemplate(tripInfoBlock, getTripInfoTemplate(tripPoints),'afterbegin');
-renderTemplate(tripEventsContainer, getSortingTemplate(),'afterbegin');
-renderTemplate(tripEventsContainer, tripEventsListTemplate);
+renderElement(tripNavigation, new SiteMenu().getElement(), RenderPosition.BEFOREEND);
+renderElement(tripFilter, new Filter().getElement(), RenderPosition.BEFOREEND);
+renderElement(tripInfoBlock, new TripInfo(tripPoints).getElement(), RenderPosition.AFTERBEGIN);
+renderElement(tripEventsContainer, new Sort().getElement(), RenderPosition.AFTERBEGIN);
+renderElement(tripEventsContainer, createElement(tripEventsListTemplate), RenderPosition.BEFOREEND);
 
 const tripEventsList = document.querySelector('.trip-events__list');
-const tripSort = document.querySelector('.trip-sort');
+
+const renderWaypoint = (tripEventsList, point) => {
+  const waypointComponent = new Waypoint(point);
+  const waypointEditingFormComponent = new EditingForm(point, destinations, offersPoint);
+
+  const replaceWaypointToEditingForm = () => {
+    tripEventsList.replaceChild(waypointEditingFormComponent.getElement(), waypointComponent.getElement());
+  };
+
+  const replaceEditingFormToWaypoint = () => {
+    tripEventsList.replaceChild(waypointComponent.getElement(), waypointEditingFormComponent.getElement());
+  };
+
+  waypointComponent.getElement().querySelector('.event__rollup-btn').addEventListener('click', () => {
+    replaceWaypointToEditingForm();
+    inputEventRemoveChangeHandler();
+    inputEventChangeHandler();
+  });
+
+  waypointEditingFormComponent.getElement().querySelector('form').addEventListener('submit', (evt) => {
+    evt.preventDefault();
+    replaceEditingFormToWaypoint();
+  });
+
+  renderElement(tripEventsList, waypointComponent.getElement(), RenderPosition.BEFOREEND);
+};
 
 const renderAllWaypoints = (points) => {
-  points.forEach((point) => renderTemplate(tripEventsList, getWaypointTemplate(point)));
+  points.forEach((point) => renderWaypoint(tripEventsList, point));
 };
 
 renderAllWaypoints(tripPoints);
-renderTemplate(tripEventsList, getEditingFormTemplate(firstEditedPoint, destinations, offersPoint), 'afterbegin');
 
 setCalendarFormInput();
-
-const inputEventDestination = document.querySelector('.event__input--destination');
-const groupType = document.querySelector('.event__type-group');
 
 const getSelectedDestinationData = (selectedDestinationName, destinations) => {
   for (const {name, description, pictures} of destinations) {
@@ -70,19 +87,30 @@ const callbackChangeDestinationTemplate = (evt) => {
   getDestinationTemplate(destination);
 };
 
-groupType.addEventListener('change', callbackChangeOfferTemplate);
-inputEventDestination.addEventListener('change', callbackChangeDestinationTemplate);
+const inputEventChangeHandler = () => {
+  const inputEventDestination = document.querySelector('.event__input--destination');
+  const groupType = document.querySelector('.event__type-group');
+  groupType.addEventListener('change', callbackChangeOfferTemplate);
+  inputEventDestination.addEventListener('change', callbackChangeDestinationTemplate);
+};
 
-const newPointButtonClickHandler = () => {
+const inputEventRemoveChangeHandler = () => {
+  const inputEventDestination = document.querySelector('.event__input--destination');
+  const groupType = document.querySelector('.event__type-group');
   if (groupType) {groupType.removeEventListener('change', callbackChangeOfferTemplate);}
   if (inputEventDestination) {inputEventDestination.removeEventListener('change', callbackChangeDestinationTemplate);}
-  tripEventsList.innerHTML = '';
-  renderAllWaypoints(tripPoints);
-  renderTemplate(tripSort, getCreatingFormTemplate(offersPoint, destinations), 'afterend');
-  const inputDestination = document.querySelector('.event__input--destination');
-  const creatingFormGroupType = document.querySelector('.event__type-group');
-  creatingFormGroupType.addEventListener('change', callbackChangeOfferTemplate);
-  inputDestination.addEventListener('change', callbackChangeDestinationTemplate);
+};
+
+const newPointButtonClickHandler = () => {
+  inputEventRemoveChangeHandler();
+  creatingFormComponent.getElement().querySelector('.event__input--destination').addEventListener('change', callbackChangeDestinationTemplate);
+  creatingFormComponent.getElement().querySelector('.event__type-group').addEventListener('change', callbackChangeOfferTemplate);
+  creatingFormComponent.getElement().querySelector('form').addEventListener('submit', (evt) => {
+    evt.preventDefault();
+    tripEventsList.removeChild(creatingFormComponent.getElement());
+    newPointButton.disabled = false;
+  });
+  renderElement(tripEventsList, creatingFormComponent.getElement(), RenderPosition.AFTERBEGIN);
   setCalendarFormInput();
   newPointButton.disabled = true;
 };
