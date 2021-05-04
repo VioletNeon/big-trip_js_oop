@@ -5,6 +5,7 @@ import Sort from './view/sort.js';
 import EditingForm from './view/editing-form.js';
 import Waypoint from './view/waypoint.js';
 import CreatingForm from './view/creating-form.js';
+import NoWaypointView from './view/no-waypoint.js';
 import {generatePoint, offersPoint, destinations} from './mock/point.js';
 import {createElement, checkOfferTypes, renderElement, RenderPosition} from './view/utils.js';
 import {getOfferTemplate} from './view/get-offer-template';
@@ -25,8 +26,6 @@ const newPointButton = document.querySelector('.trip-main__event-add-btn');
 
 renderElement(tripNavigation, new SiteMenu().getElement(), RenderPosition.BEFOREEND);
 renderElement(tripFilter, new Filter().getElement(), RenderPosition.BEFOREEND);
-renderElement(tripInfoBlock, new TripInfo(tripPoints).getElement(), RenderPosition.AFTERBEGIN);
-renderElement(tripEventsContainer, new Sort().getElement(), RenderPosition.AFTERBEGIN);
 renderElement(tripEventsContainer, createElement(tripEventsListTemplate), RenderPosition.BEFOREEND);
 
 const tripEventsList = document.querySelector('.trip-events__list');
@@ -43,15 +42,28 @@ const renderWaypoint = (tripEventsList, point) => {
     tripEventsList.replaceChild(waypointComponent.getElement(), waypointEditingFormComponent.getElement());
   };
 
+  const onEscKeyDown = (evt) => {
+    if (evt.key === 'Escape' || evt.key === 'Esc') {
+      evt.preventDefault();
+      replaceEditingFormToWaypoint();
+      document.removeEventListener('keydown', onEscKeyDown);
+    }
+  };
+
   waypointComponent.getElement().querySelector('.event__rollup-btn').addEventListener('click', () => {
     replaceWaypointToEditingForm();
+    document.addEventListener('keydown', onEscKeyDown);
     inputEventRemoveChangeHandler();
     inputEventChangeHandler();
+    setCalendarFormInput();
   });
+
+  waypointEditingFormComponent.getElement().querySelector('.event__rollup-btn').addEventListener('click', replaceEditingFormToWaypoint);
 
   waypointEditingFormComponent.getElement().querySelector('form').addEventListener('submit', (evt) => {
     evt.preventDefault();
     replaceEditingFormToWaypoint();
+    document.removeEventListener('keydown', onEscKeyDown);
   });
 
   renderElement(tripEventsList, waypointComponent.getElement(), RenderPosition.BEFOREEND);
@@ -61,9 +73,13 @@ const renderAllWaypoints = (points) => {
   points.forEach((point) => renderWaypoint(tripEventsList, point));
 };
 
-renderAllWaypoints(tripPoints);
-
-setCalendarFormInput();
+if (tripPoints.length === 0) {
+  renderElement(tripEventsContainer, new NoWaypointView().getElement(), RenderPosition.BEFOREEND);
+} else {
+  renderElement(tripInfoBlock, new TripInfo(tripPoints).getElement(), RenderPosition.AFTERBEGIN);
+  renderElement(tripEventsContainer, new Sort().getElement(), RenderPosition.AFTERBEGIN);
+  renderAllWaypoints(tripPoints);
+}
 
 const getSelectedDestinationData = (selectedDestinationName, destinations) => {
   for (const {name, description, pictures} of destinations) {
@@ -97,16 +113,30 @@ const inputEventChangeHandler = () => {
 const inputEventRemoveChangeHandler = () => {
   const inputEventDestination = document.querySelector('.event__input--destination');
   const groupType = document.querySelector('.event__type-group');
-  if (groupType) {groupType.removeEventListener('change', callbackChangeOfferTemplate);}
-  if (inputEventDestination) {inputEventDestination.removeEventListener('change', callbackChangeDestinationTemplate);}
+  if (groupType) {
+    groupType.removeEventListener('change', callbackChangeOfferTemplate);
+  }
+  if (inputEventDestination) {
+    inputEventDestination.removeEventListener('change', callbackChangeDestinationTemplate);
+  }
 };
 
 const newPointButtonClickHandler = () => {
+  const onEscKeyDown = (evt) => {
+    if (evt.key === 'Escape' || evt.key === 'Esc') {
+      evt.preventDefault();
+      tripEventsList.removeChild(creatingFormComponent.getElement());
+      document.removeEventListener('keydown', onEscKeyDown);
+      newPointButton.disabled = false;
+    }
+  };
   inputEventRemoveChangeHandler();
+  document.addEventListener('keydown', onEscKeyDown);
   creatingFormComponent.getElement().querySelector('.event__input--destination').addEventListener('change', callbackChangeDestinationTemplate);
   creatingFormComponent.getElement().querySelector('.event__type-group').addEventListener('change', callbackChangeOfferTemplate);
   creatingFormComponent.getElement().querySelector('form').addEventListener('submit', (evt) => {
     evt.preventDefault();
+    document.removeEventListener('keydown', onEscKeyDown);
     tripEventsList.removeChild(creatingFormComponent.getElement());
     newPointButton.disabled = false;
   });
