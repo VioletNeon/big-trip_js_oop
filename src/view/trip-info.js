@@ -1,5 +1,7 @@
 import {changeDateFormat, dayjs, createElement} from './utils.js';
 
+const POINTS_TRIP_SIZE = 3;
+
 export default class TripInfo {
   constructor(points) {
     this._points = points;
@@ -7,7 +9,6 @@ export default class TripInfo {
   }
 
   getTemplate() {
-    const POINTS_TRIP_SIZE = 3;
     const destinationPoints = [];
     const allDestinationNames = new Set();
     const startDateMark = dayjs(0);
@@ -30,7 +31,11 @@ export default class TripInfo {
     const minDateFrom = dayjs(Math.min(...destinationPoints));
     const maxDateTo = dayjs(Math.max(...destinationPoints));
     const destinations = Array.from(allDestinationNames);
-    const tripList = destinations.length > POINTS_TRIP_SIZE ? `${destinations[0]} - ... - ${destinations[destinations.length - 1]}` : destinations.join(' - ');
+    const firstWaypoint = destinations[0];
+    const lastWaypoint = destinations[destinations.length - 1];
+    const longTrip = `${firstWaypoint} - ... - ${lastWaypoint}`;
+    const shortTrip = destinations.join(' - ');
+    const tripList = destinations.length > POINTS_TRIP_SIZE ? longTrip : shortTrip;
     const dateTripFrom = changeDateFormat(minDateFrom, 'MMM DD');
     const dateTripTo = changeDateFormat(maxDateTo, 'MMM DD');
     return `<section class="trip-main__trip-info  trip-info">

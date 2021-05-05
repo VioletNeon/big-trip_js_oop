@@ -24,9 +24,9 @@ const tripEventsContainer = document.querySelector('.trip-events');
 const tripEventsListTemplate = '<ul class="trip-events__list"></ul>';
 const newPointButton = document.querySelector('.trip-main__event-add-btn');
 
-renderElement(tripNavigation, new SiteMenu().getElement(), RenderPosition.BEFOREEND);
-renderElement(tripFilter, new Filter().getElement(), RenderPosition.BEFOREEND);
-renderElement(tripEventsContainer, createElement(tripEventsListTemplate), RenderPosition.BEFOREEND);
+renderElement(tripNavigation, new SiteMenu().getElement());
+renderElement(tripFilter, new Filter().getElement());
+renderElement(tripEventsContainer, createElement(tripEventsListTemplate));
 
 const tripEventsList = document.querySelector('.trip-events__list');
 
@@ -66,7 +66,7 @@ const renderWaypoint = (tripEventsList, point) => {
     document.removeEventListener('keydown', onEscKeyDown);
   });
 
-  renderElement(tripEventsList, waypointComponent.getElement(), RenderPosition.BEFOREEND);
+  renderElement(tripEventsList, waypointComponent.getElement());
 };
 
 const renderAllWaypoints = (points) => {
@@ -89,7 +89,7 @@ const getSelectedDestinationData = (selectedDestinationName, destinations) => {
   }
 };
 
-const callbackChangeOfferTemplate = (evt) => {
+const groupTypeChangeHandler = (evt) => {
   const offers = checkOfferTypes(evt.target.value, offersPoint);
   getOfferTemplate(offers);
   const eventTypeIcon = document.querySelector('.event__type-icon');
@@ -98,7 +98,7 @@ const callbackChangeOfferTemplate = (evt) => {
   typeOutput.textContent = evt.target.value;
 };
 
-const callbackChangeDestinationTemplate = (evt) => {
+const inputEventDestinationChangeHandler = (evt) => {
   const destination = getSelectedDestinationData(evt.target.value, destinations);
   getDestinationTemplate(destination);
 };
@@ -106,19 +106,15 @@ const callbackChangeDestinationTemplate = (evt) => {
 const inputEventChangeHandler = () => {
   const inputEventDestination = document.querySelector('.event__input--destination');
   const groupType = document.querySelector('.event__type-group');
-  groupType.addEventListener('change', callbackChangeOfferTemplate);
-  inputEventDestination.addEventListener('change', callbackChangeDestinationTemplate);
+  groupType.addEventListener('change', groupTypeChangeHandler);
+  inputEventDestination.addEventListener('change', inputEventDestinationChangeHandler);
 };
 
 const inputEventRemoveChangeHandler = () => {
   const inputEventDestination = document.querySelector('.event__input--destination');
   const groupType = document.querySelector('.event__type-group');
-  if (groupType) {
-    groupType.removeEventListener('change', callbackChangeOfferTemplate);
-  }
-  if (inputEventDestination) {
-    inputEventDestination.removeEventListener('change', callbackChangeDestinationTemplate);
-  }
+  if (groupType) {groupType.removeEventListener('change', groupTypeChangeHandler);}
+  if (inputEventDestination) {inputEventDestination.removeEventListener('change', inputEventDestinationChangeHandler);}
 };
 
 const newPointButtonClickHandler = () => {
@@ -131,9 +127,10 @@ const newPointButtonClickHandler = () => {
     }
   };
   inputEventRemoveChangeHandler();
+
   document.addEventListener('keydown', onEscKeyDown);
-  creatingFormComponent.getElement().querySelector('.event__input--destination').addEventListener('change', callbackChangeDestinationTemplate);
-  creatingFormComponent.getElement().querySelector('.event__type-group').addEventListener('change', callbackChangeOfferTemplate);
+  creatingFormComponent.getElement().querySelector('.event__input--destination').addEventListener('change', inputEventDestinationChangeHandler);
+  creatingFormComponent.getElement().querySelector('.event__type-group').addEventListener('change', groupTypeChangeHandler);
   creatingFormComponent.getElement().querySelector('form').addEventListener('submit', (evt) => {
     evt.preventDefault();
     document.removeEventListener('keydown', onEscKeyDown);
