@@ -1,11 +1,19 @@
-import {changeDateFormat, capitalizeFirstLetter} from './utils.js';
+import {changeDateFormat, capitalizeFirstLetter, createElement} from './utils.js';
+import {getPictureTemplate} from './get-picture-template.js';
 
-const getOfferTemplate = (pointOffers) => {
-  if (pointOffers) {
-    const templates = pointOffers.map(({title, price}) => {
-      const offerTitle = [title].join('-');
-      return `
-      <div class="event__offer-selector">
+export default class EditingForm {
+  constructor(point, destinations, offers) {
+    this._point = point;
+    this._destinations = destinations;
+    this._offers = offers;
+    this._element = null;
+  }
+
+  getOfferTemplate(pointOffers) {
+    if (pointOffers) {
+      const templates = pointOffers.map(({title, price}) => {
+        const offerTitle = [title].join('-');
+        return `<div class="event__offer-selector">
         <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offerTitle}-1" type="checkbox" name="event-offer-luggage">
         <label class="event__offer-label" for="event-offer-${offerTitle}-1">
           <span class="event__offer-title">${title}</span>
@@ -13,38 +21,28 @@ const getOfferTemplate = (pointOffers) => {
           <span class="event__offer-price">${price}</span>
         </label>
       </div>`;
-    });
-    return templates.join(' ');
+      });
+      return templates.join(' ');
+    }
+    return '';
   }
-  return '';
-};
 
-const getPictureTemplate = (pictures) => {
-  if (pictures) {
-    const templates = pictures.map(({src, description}) => `<img class="event__photo" src="${src}" alt="${description}">`);
-    return templates.join(' ');
-  }
-  return '';
-};
-
-const getEditingFormTemplate = (point, destinations, offerTypes) => {
-  const {type, dateFrom, dateTo, basePrice, destination, offers} = point;
-  const {name, description, pictures} = destination;
-  const destinationNames = destinations.map(({name}) => name);
-  const allOffers = offerTypes.map(({type}) => type);
-  const typeWaypoint = capitalizeFirstLetter(type);
-  const eventDateAttributeValueFrom = changeDateFormat(dateFrom, 'YY/MM/DD HH:mm');
-  const eventDateAttributeValueTo = changeDateFormat(dateTo, 'YY/MM/DD HH:mm');
-  const typesForSelect = allOffers.map((item) => {return `
-      <div class="event__type-item">
+  getTemplate() {
+    const {type, dateFrom, dateTo, basePrice, destination, offers} = this._point;
+    const {name, description, pictures} = destination;
+    const destinationNames = this._destinations.map(({name}) => name);
+    const allOffers = this._offers.map(({type}) => type);
+    const typeWaypoint = capitalizeFirstLetter(type);
+    const eventDateAttributeValueFrom = changeDateFormat(dateFrom, 'YY/MM/DD HH:mm');
+    const eventDateAttributeValueTo = changeDateFormat(dateTo, 'YY/MM/DD HH:mm');
+    const typesForSelect = allOffers.map((item) => {return `<div class="event__type-item">
         <input id="event-type-${item}-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${item}">
         <label class="event__type-label  event__type-label--${item}" for="event-type-${item}-1">${capitalizeFirstLetter(item)}</label>
       </div>`;}).join(' ');
-  const destinationForSelect = destinationNames.map((item) => {return `<option value="${item}"></option>`;}).join(' ');
-  const offersForSelect = getOfferTemplate(offers);
-  const pointPictures = getPictureTemplate(pictures);
-
-  return `
+    const destinationForSelect = destinationNames.map((item) => {return `<option value="${item}"></option>`;}).join(' ');
+    const offersForSelect = this.getOfferTemplate(offers);
+    const pointPictures = getPictureTemplate(pictures);
+    return `<li class="trip-events__item">
     <form class="event event--edit" action="#" method="post">
       <header class="event__header">
         <div class="event__type-wrapper">
@@ -110,7 +108,19 @@ const getEditingFormTemplate = (point, destinations, offerTypes) => {
           </div>
         </section>
       </section>
-    </form>`;
-};
+    </form>
+    </li>`;
+  }
 
-export {getEditingFormTemplate, getPictureTemplate};
+  getElement() {
+    if (!this._element) {
+      this._element = createElement(this.getTemplate());
+    }
+
+    return this._element;
+  }
+
+  removeElement() {
+    this._element = null;
+  }
+}

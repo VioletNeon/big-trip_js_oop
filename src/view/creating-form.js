@@ -1,16 +1,23 @@
-import {capitalizeFirstLetter} from './utils.js';
+import {capitalizeFirstLetter, createElement} from './utils.js';
 
-const getCreatingFormTemplate = (offers, destinations) => {
-  const names = destinations.map(({name}) => name);
-  const offerTypes = offers.map(({type}) => type);
-  const offerTypesTemplate = offerTypes.map((item) => {return `
+export default class CreatingForm {
+  constructor(offers, destinations) {
+    this._offers = offers;
+    this._destinations = destinations;
+    this._element = null;
+  }
+
+  getTemplate() {
+    const names = this._destinations.map(({name}) => name);
+    const offerTypes = this._offers.map(({type}) => type);
+    const offerTypesTemplate = offerTypes.map((item) => {return `
       <div class="event__type-item">
         <input id="event-type-${item}-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${item}">
         <label class="event__type-label  event__type-label--${item}" for="event-type-${item}-1">${capitalizeFirstLetter(item)}</label>
       </div>`;}).join(' ');
-  const nameDestinationsTemplate = names.map((item) => {return `<option value="${item}"></option>`;}).join(' ');
-  return `
-    <form class="event event--edit" action="#" method="post">
+    const nameDestinationsTemplate = names.map((item) => {return `<option value="${item}"></option>`;}).join(' ');
+    return `<li class="trip-events__item">
+  <form class="event event--edit" action="#" method="post">
     <header class="event__header">
       <div class="event__type-wrapper">
           <label class="event__type  event__type-btn" for="event-type-toggle-1">
@@ -59,10 +66,7 @@ const getCreatingFormTemplate = (offers, destinations) => {
       <section class="event__details">
         <section class="event__section  event__section--offers">
           <h3 class="event__section-title  event__section-title--offers">Offers</h3>
-
-          <div class="event__available-offers">
-
-          </div>
+          <div class="event__available-offers"></div>
         </section>
         <section class="event__section  event__section--destination visually-hidden">
           <h3 class="event__section-title  event__section-title--destination">Destination</h3>
@@ -74,7 +78,19 @@ const getCreatingFormTemplate = (offers, destinations) => {
           </div>
         </section>
       </section>
-    </form>`;
-};
+    </form>
+  </li>`;
+  }
 
-export {getCreatingFormTemplate};
+  getElement() {
+    if (!this._element) {
+      this._element = createElement(this.getTemplate());
+    }
+
+    return this._element;
+  }
+
+  removeElement() {
+    this._element = null;
+  }
+}
