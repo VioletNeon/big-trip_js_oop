@@ -1,9 +1,12 @@
-import {changeDateFormat, getDuration, capitalizeFirstLetter, createElement} from './utils.js';
+import AbstractView from './abstract.js';
+import {capitalizeFirstLetter} from '../utils/common.js';
+import {changeDateFormat, getDuration} from '../utils/date.js';
 
-export default class Waypoint {
+export default class Waypoint extends AbstractView {
   constructor(point) {
+    super();
     this._point = point;
-    this._element = null;
+    this._rollupButtonClickHandler = this._rollupButtonClickHandler.bind(this);
   }
 
   getTemplate() {
@@ -59,15 +62,12 @@ export default class Waypoint {
     </li>`;
   }
 
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
+  _rollupButtonClickHandler() {
+    this._callback.rollupButtonClick();
   }
 
-  removeElement() {
-    this._element = null;
+  setRollupButtonClickHandler(callback) {
+    this._callback.rollupButtonClick = callback;
+    this.getElement().querySelector('.event__rollup-btn').addEventListener('click', this._rollupButtonClickHandler);
   }
 }

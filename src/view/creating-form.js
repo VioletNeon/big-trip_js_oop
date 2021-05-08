@@ -1,10 +1,16 @@
-import {capitalizeFirstLetter, createElement} from './utils.js';
+import AbstractView from './abstract.js';
+import {capitalizeFirstLetter} from '../utils/common.js';
+import {flatpickr} from '../utils/date.js';
 
-export default class CreatingForm {
+
+export default class CreatingForm extends AbstractView {
   constructor(offers, destinations) {
+    super();
     this._offers = offers;
     this._destinations = destinations;
-    this._element = null;
+    this._creatingFormSubmitHandler = this._creatingFormSubmitHandler.bind(this);
+    this._groupTypeChangeHandler = this._groupTypeChangeHandler.bind(this);
+    this._inputEventDestinationChangeHandler = this._inputEventDestinationChangeHandler.bind(this);
   }
 
   getTemplate() {
@@ -17,7 +23,7 @@ export default class CreatingForm {
       </div>`;}).join(' ');
     const nameDestinationsTemplate = names.map((item) => {return `<option value="${item}"></option>`;}).join(' ');
     return `<li class="trip-events__item">
-  <form class="event event--edit" action="#" method="post">
+<form class="event event--edit" action="#" method="post">
     <header class="event__header">
       <div class="event__type-wrapper">
           <label class="event__type  event__type-btn" for="event-type-toggle-1">
@@ -25,7 +31,6 @@ export default class CreatingForm {
             <img class="event__type-icon" width="17" height="17" src="img/icons/flight.png" alt="Event type icon">
           </label>
           <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" type="checkbox">
-
           <div class="event__type-list">
             <fieldset class="event__type-group">
               <legend class="visually-hidden">Event type</legend>
@@ -33,7 +38,6 @@ export default class CreatingForm {
             </fieldset>
           </div>
         </div>
-
         <div class="event__field-group  event__field-group--destination">
           <label class="event__label  event__type-output" for="event-destination-1">
             Flight
@@ -43,7 +47,6 @@ export default class CreatingForm {
             ${nameDestinationsTemplate}
           </datalist>
         </div>
-
         <div class="event__field-group  event__field-group--time">
           <label class="visually-hidden" for="event-start-time-1">From</label>
           <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="19/03/19 00:00">
@@ -51,7 +54,6 @@ export default class CreatingForm {
           <label class="visually-hidden" for="event-end-time-1">To</label>
           <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="19/03/19 00:00">
         </div>
-
         <div class="event__field-group  event__field-group--price">
           <label class="event__label" for="event-price-1">
             <span class="visually-hidden">Price</span>
@@ -59,7 +61,6 @@ export default class CreatingForm {
           </label>
           <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="">
         </div>
-
         <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
         <button class="event__reset-btn" type="reset">Cancel</button>
       </header>
@@ -71,7 +72,6 @@ export default class CreatingForm {
         <section class="event__section  event__section--destination visually-hidden">
           <h3 class="event__section-title  event__section-title--destination">Destination</h3>
           <p class="event__destination-description"></p>
-
           <div class="event__photos-container">
             <div class="event__photos-tape">
             </div>
@@ -82,15 +82,43 @@ export default class CreatingForm {
   </li>`;
   }
 
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
+  _creatingFormSubmitHandler(evt) {
+    evt.preventDefault();
+    this._callback.creatingFormSubmit();
   }
 
-  removeElement() {
-    this._element = null;
+  _groupTypeChangeHandler(evt) {
+    this._callback.groupTypeChange(evt);
+  }
+
+  _inputEventDestinationChangeHandler(evt) {
+    this._callback.inputEventDestinationChange(evt);
+  }
+
+  setCreatingFormSubmitHandler(callback) {
+    this._callback.creatingFormSubmit = callback;
+    this.getElement().querySelector('form').addEventListener('submit', this._creatingFormSubmitHandler);
+  }
+
+  setGroupTypeChangeHandler(callback) {
+    this._callback.groupTypeChange = callback;
+    this.getElement().querySelector('.event__type-group').addEventListener('change', this._groupTypeChangeHandler);
+  }
+
+  setInputEventDestinationChangeHandler(callback) {
+    this._callback.inputEventDestinationChange = callback;
+    this.getElement().querySelector('.event__input--destination').addEventListener('change', this._inputEventDestinationChangeHandler);
+  }
+
+  setCalendarFormInput() {
+    const eventTimeInput = this.getElement().querySelectorAll('.event__input--time');
+    if (eventTimeInput.length > 0) {
+      eventTimeInput.forEach((item) => {
+        flatpickr(item, {
+          enableTime: true,
+          dateFormat: 'y/m/d H:i',
+        });
+      });
+    }
   }
 }

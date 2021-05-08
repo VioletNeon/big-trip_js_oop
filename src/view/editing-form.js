@@ -1,12 +1,18 @@
-import {changeDateFormat, capitalizeFirstLetter, createElement} from './utils.js';
+import AbstractView from './abstract.js';
+import {capitalizeFirstLetter} from '../utils/common.js';
+import {changeDateFormat, flatpickr} from '../utils/date.js';
 import {getPictureTemplate} from './get-picture-template.js';
 
-export default class EditingForm {
+export default class EditingForm extends AbstractView {
   constructor(point, destinations, offers) {
+    super();
     this._point = point;
     this._destinations = destinations;
     this._offers = offers;
-    this._element = null;
+    this._editingFormSubmitHandler = this._editingFormSubmitHandler.bind(this);
+    this._rollupButtonClickHandler = this._rollupButtonClickHandler.bind(this);
+    this._groupTypeChangeHandler = this._groupTypeChangeHandler.bind(this);
+    this._inputEventDestinationChangeHandler = this._inputEventDestinationChangeHandler.bind(this);
   }
 
   getOfferTemplate(pointOffers) {
@@ -51,7 +57,6 @@ export default class EditingForm {
             <img class="event__type-icon" width="17" height="17" src="img/icons/${type}.png" alt="Event type icon">
           </label>
           <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" type="checkbox">
-
           <div class="event__type-list">
             <fieldset class="event__type-group">
               <legend class="visually-hidden">Event type</legend>
@@ -59,7 +64,6 @@ export default class EditingForm {
             </fieldset>
           </div>
         </div>
-
         <div class="event__field-group event__field-group--destination">
           <label class="event__label  event__type-output" for="event-destination-1">
             ${typeWaypoint}
@@ -69,7 +73,6 @@ export default class EditingForm {
             ${destinationForSelect}
           </datalist>
         </div>
-
         <div class="event__field-group  event__field-group--time">
           <label class="visually-hidden" for="event-start-time-1">From</label>
           <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="${eventDateAttributeValueFrom}">
@@ -77,7 +80,6 @@ export default class EditingForm {
           <label class="visually-hidden" for="event-end-time-1">To</label>
           <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="${eventDateAttributeValueTo}">
         </div>
-
         <div class="event__field-group  event__field-group--price">
           <label class="event__label" for="event-price-1">
             <span class="visually-hidden">Price</span>
@@ -85,7 +87,6 @@ export default class EditingForm {
           </label>
           <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${basePrice}">
         </div>
-
         <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
         <button class="event__reset-btn" type="reset">Cancel</button>
         <button class="event__rollup-btn" type="button">
@@ -99,11 +100,9 @@ export default class EditingForm {
             ${offersForSelect}
           </div>
         </section>
-
         <section class="event__section  event__section--destination ${description || pointPictures.length > 0 ? '' : 'visually-hidden'}">
           <h3 class="event__section-title  event__section-title--destination">Destination</h3>
           <p class="event__destination-description ${description ? '' : 'visually-hidden'}">${description}</p>
-
           <div class="event__photos-container ${pointPictures ? '' : 'visually-hidden'}">
             <div class="event__photos-tape">
               ${pointPictures}
@@ -115,15 +114,52 @@ export default class EditingForm {
     </li>`;
   }
 
-  getElement() {
-    if (!this._element) {
-      this._element = createElement(this.getTemplate());
-    }
-
-    return this._element;
+  _editingFormSubmitHandler(evt) {
+    evt.preventDefault();
+    this._callback.editingFormSubmit();
   }
 
-  removeElement() {
-    this._element = null;
+  _rollupButtonClickHandler() {
+    this._callback.rollupButtonClick();
+  }
+
+  _groupTypeChangeHandler(evt) {
+    this._callback.groupTypeChange(evt);
+  }
+
+  _inputEventDestinationChangeHandler(evt) {
+    this._callback.inputEventDestinationChange(evt);
+  }
+
+  setEditingFormSubmitHandler(callback) {
+    this._callback.editingFormSubmit = callback;
+    this.getElement().querySelector('form').addEventListener('submit', this._editingFormSubmitHandler);
+  }
+
+  setRollupButtonClickHandler(callback) {
+    this._callback.rollupButtonClick = callback;
+    this.getElement().querySelector('.event__rollup-btn').addEventListener('click', this._rollupButtonClickHandler);
+  }
+
+  setGroupTypeChangeHandler(callback) {
+    this._callback.groupTypeChange = callback;
+    this.getElement().querySelector('.event__type-group').addEventListener('change', this._groupTypeChangeHandler);
+  }
+
+  setInputEventDestinationChangeHandler(callback) {
+    this._callback.inputEventDestinationChange = callback;
+    this.getElement().querySelector('.event__input--destination').addEventListener('change', this._inputEventDestinationChangeHandler);
+  }
+
+  setCalendarFormInput() {
+    const eventTimeInput = this.getElement().querySelectorAll('.event__input--time');
+    if (eventTimeInput.length > 0) {
+      eventTimeInput.forEach((item) => {
+        flatpickr(item, {
+          enableTime: true,
+          dateFormat: 'y/m/d H:i',
+        });
+      });
+    }
   }
 }

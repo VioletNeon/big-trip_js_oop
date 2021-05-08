@@ -7,10 +7,10 @@ import Waypoint from './view/waypoint.js';
 import CreatingForm from './view/creating-form.js';
 import NoWaypointView from './view/no-waypoint.js';
 import {generatePoint, offersPoint, destinations} from './mock/point.js';
-import {createElement, checkOfferTypes, renderElement, RenderPosition} from './view/utils.js';
+import {checkOfferTypes} from './utils/common.js';
+import {createElement, render, RenderPosition, replace} from './utils/render.js';
 import {getOfferTemplate} from './view/get-offer-template';
 import {getDestinationTemplate} from './view/get-destination-template';
-import {setCalendarFormInput} from './view/set-calendar-form-input';
 
 const WAYPOINT_COUNT = 15;
 const tripPoints = new Array(WAYPOINT_COUNT).fill(null).map(() => generatePoint());
@@ -24,9 +24,9 @@ const tripEventsContainer = document.querySelector('.trip-events');
 const tripEventsListTemplate = '<ul class="trip-events__list"></ul>';
 const newPointButton = document.querySelector('.trip-main__event-add-btn');
 
-renderElement(tripNavigation, new SiteMenu().getElement());
-renderElement(tripFilter, new Filter().getElement());
-renderElement(tripEventsContainer, createElement(tripEventsListTemplate));
+render(tripNavigation, new SiteMenu());
+render(tripFilter, new Filter());
+render(tripEventsContainer, createElement(tripEventsListTemplate));
 
 const tripEventsList = document.querySelector('.trip-events__list');
 
@@ -35,38 +35,41 @@ const renderWaypoint = (tripEventsList, point) => {
   const waypointEditingFormComponent = new EditingForm(point, destinations, offersPoint);
 
   const replaceWaypointToEditingForm = () => {
-    tripEventsList.replaceChild(waypointEditingFormComponent.getElement(), waypointComponent.getElement());
+    replace(waypointEditingFormComponent, waypointComponent);
   };
 
   const replaceEditingFormToWaypoint = () => {
-    tripEventsList.replaceChild(waypointComponent.getElement(), waypointEditingFormComponent.getElement());
+    replace(waypointComponent, waypointEditingFormComponent);
   };
 
-  const onEscKeyDown = (evt) => {
+  const escKeyDownHandler = (evt) => {
     if (evt.key === 'Escape' || evt.key === 'Esc') {
       evt.preventDefault();
       replaceEditingFormToWaypoint();
-      document.removeEventListener('keydown', onEscKeyDown);
+      document.removeEventListener('keydown', escKeyDownHandler);
     }
   };
 
-  waypointComponent.getElement().querySelector('.event__rollup-btn').addEventListener('click', () => {
-    replaceWaypointToEditingForm();
-    document.addEventListener('keydown', onEscKeyDown);
+  waypointComponent.setRollupButtonClickHandler(() => {
     inputEventRemoveChangeHandler();
-    inputEventChangeHandler();
-    setCalendarFormInput();
+    replaceWaypointToEditingForm();
+    document.addEventListener('keydown', escKeyDownHandler);
+    waypointEditingFormComponent.setGroupTypeChangeHandler(groupTypeChangeHandler);
+    waypointEditingFormComponent.setInputEventDestinationChangeHandler(inputEventDestinationChangeHandler);
+    waypointEditingFormComponent.setCalendarFormInput();
   });
 
-  waypointEditingFormComponent.getElement().querySelector('.event__rollup-btn').addEventListener('click', replaceEditingFormToWaypoint);
-
-  waypointEditingFormComponent.getElement().querySelector('form').addEventListener('submit', (evt) => {
-    evt.preventDefault();
+  waypointEditingFormComponent.setRollupButtonClickHandler(() => {
     replaceEditingFormToWaypoint();
-    document.removeEventListener('keydown', onEscKeyDown);
+    document.removeEventListener('keydown', escKeyDownHandler);
   });
 
-  renderElement(tripEventsList, waypointComponent.getElement());
+  waypointEditingFormComponent.setEditingFormSubmitHandler(() => {
+    replaceEditingFormToWaypoint();
+    document.removeEventListener('keydown', escKeyDownHandler);
+  });
+
+  render(tripEventsList, waypointComponent);
 };
 
 const renderAllWaypoints = (points) => {
@@ -74,10 +77,10 @@ const renderAllWaypoints = (points) => {
 };
 
 if (tripPoints.length === 0) {
-  renderElement(tripEventsContainer, new NoWaypointView().getElement(), RenderPosition.BEFOREEND);
+  render(tripEventsContainer, new NoWaypointView());
 } else {
-  renderElement(tripInfoBlock, new TripInfo(tripPoints).getElement(), RenderPosition.AFTERBEGIN);
-  renderElement(tripEventsContainer, new Sort().getElement(), RenderPosition.AFTERBEGIN);
+  render(tripInfoBlock, new TripInfo(tripPoints), RenderPosition.AFTERBEGIN);
+  render(tripEventsContainer, new Sort(), RenderPosition.AFTERBEGIN);
   renderAllWaypoints(tripPoints);
 }
 
@@ -103,42 +106,37 @@ const inputEventDestinationChangeHandler = (evt) => {
   getDestinationTemplate(destination);
 };
 
-const inputEventChangeHandler = () => {
-  const inputEventDestination = document.querySelector('.event__input--destination');
-  const groupType = document.querySelector('.event__type-group');
-  groupType.addEventListener('change', groupTypeChangeHandler);
-  inputEventDestination.addEventListener('change', inputEventDestinationChangeHandler);
-};
-
 const inputEventRemoveChangeHandler = () => {
   const inputEventDestination = document.querySelector('.event__input--destination');
   const groupType = document.querySelector('.event__type-group');
-  if (groupType) {groupType.removeEventListener('change', groupTypeChangeHandler);}
-  if (inputEventDestination) {inputEventDestination.removeEventListener('change', inputEventDestinationChangeHandler);}
+  if (groupType) {
+    groupType.removeEventListener('change', groupTypeChangeHandler);
+  }
+  if (inputEventDestination) {
+    inputEventDestination.removeEventListener('change', inputEventDestinationChangeHandler);
+  }
 };
 
 const newPointButtonClickHandler = () => {
-  const onEscKeyDown = (evt) => {
+  const escKeyDownHandler = (evt) => {
     if (evt.key === 'Escape' || evt.key === 'Esc') {
       evt.preventDefault();
       tripEventsList.removeChild(creatingFormComponent.getElement());
-      document.removeEventListener('keydown', onEscKeyDown);
       newPointButton.disabled = false;
+      document.removeEventListener('keydown', escKeyDownHandler);
     }
   };
   inputEventRemoveChangeHandler();
-
-  document.addEventListener('keydown', onEscKeyDown);
-  creatingFormComponent.getElement().querySelector('.event__input--destination').addEventListener('change', inputEventDestinationChangeHandler);
-  creatingFormComponent.getElement().querySelector('.event__type-group').addEventListener('change', groupTypeChangeHandler);
-  creatingFormComponent.getElement().querySelector('form').addEventListener('submit', (evt) => {
-    evt.preventDefault();
-    document.removeEventListener('keydown', onEscKeyDown);
+  document.addEventListener('keydown', escKeyDownHandler);
+  creatingFormComponent.setInputEventDestinationChangeHandler(inputEventDestinationChangeHandler);
+  creatingFormComponent.setGroupTypeChangeHandler(groupTypeChangeHandler);
+  creatingFormComponent.setCreatingFormSubmitHandler(() => {
+    document.removeEventListener('keydown', escKeyDownHandler);
     tripEventsList.removeChild(creatingFormComponent.getElement());
     newPointButton.disabled = false;
   });
-  renderElement(tripEventsList, creatingFormComponent.getElement(), RenderPosition.AFTERBEGIN);
-  setCalendarFormInput();
+  render(tripEventsList, creatingFormComponent, RenderPosition.AFTERBEGIN);
+  creatingFormComponent.setCalendarFormInput();
   newPointButton.disabled = true;
 };
 

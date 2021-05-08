@@ -1,4 +1,5 @@
-import {getRandomItems, getRandomItem, getRandomInteger, checkOfferTypes, dayjs} from '../view/utils.js';
+import {getRandomItems, getRandomItem, getRandomInteger, checkOfferTypes} from '../utils/common.js';
+import {dayjs} from '../utils/date.js';
 
 const MAX_OFFER_PRICE = 200;
 const ARRAY_LENGTH_ITEM = 5;
