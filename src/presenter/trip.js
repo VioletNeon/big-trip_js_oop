@@ -8,6 +8,8 @@ import NewPointPresenter from '../presenter/new-point.js';
 import {render, RenderPosition, completelyRemove} from '../utils/render.js';
 import {updateItem} from '../utils/common.js';
 import PointPresenter from '../presenter/point.js';
+import {SortType} from '../utils/const.js';
+import {sortWaypointTime, sortWaypointPrice, sortWaypointDay} from '../utils/sorting.js';
 
 export default class Trip {
   constructor(headerContainer, mainContainer, destinations, offersPoint) {
@@ -21,17 +23,20 @@ export default class Trip {
     this._siteMenuComponent = new SiteMenuView();
     this._filterComponent = new FilterView();
     this._pointPresenter = {};
+    this._currentSortType = SortType.DAY;
 
     this._waypointChangeHandler = this._waypointChangeHandler.bind(this);
     this._modeChangeHandler = this._modeChangeHandler.bind(this);
     this._newPointButtonClickHandler = this._newPointButtonClickHandler.bind(this);
     this._removeCreatingFormHandler = this._removeCreatingFormHandler.bind(this);
+    this._handleSortTypeChange = this._handleSortTypeChange.bind(this);
   }
 
   init(waypoints) {
     this._newPointButton = this._headerContainer.querySelector('.trip-main__event-add-btn');
     this._newPoint = new NewPointPresenter(this._waypointListComponent, this._newPointButton, this._destinations, this._offersPoint, this._waypointChangeHandler);
     this._waypoints = waypoints.slice();
+    this._sourcedTripWaypoints = waypoints.slice();
     this._renderSiteMenu();
     this._renderFilter();
     this._renderWaypointList();
@@ -54,6 +59,7 @@ export default class Trip {
 
   _waypointChangeHandler(updatedWaypoint) {
     this._waypoints = updateItem(this._waypoints, updatedWaypoint);
+    this._sourcedTripWaypoints = updateItem(this._sourcedTripWaypoints, updatedWaypoint);
     this._pointPresenter[updatedWaypoint.id].init(updatedWaypoint);
   }
 
@@ -62,6 +68,7 @@ export default class Trip {
   }
 
   _renderSort() {
+    this._sortComponent.setSortTypeChangeHandler(this._handleSortTypeChange);
     render(this._mainContainer, this._sortComponent, RenderPosition.AFTERBEGIN);
   }
 
@@ -106,11 +113,41 @@ export default class Trip {
   _newPointButtonClickHandler() {
     this._newPoint.init();
     this._modeChangeHandler();
+    this._handleSortTypeChange(SortType.DAY);
+    this._sortComponent.setDefaultTripSortInput();
     completelyRemove(this._noWaypointComponent);
   }
 
   _setNewPointButtonClickHandler() {
     this._newPointButton.addEventListener('click', this._newPointButtonClickHandler);
+  }
+
+  _sortWaypoints(sortType) {
+    switch (sortType) {
+      case SortType.DAY:
+        this._waypoints.sort(sortWaypointDay);
+        break;
+      case SortType.TIME:
+        this._waypoints.sort(sortWaypointTime);
+        break;
+      case SortType.PRICE:
+        this._waypoints.sort(sortWaypointPrice);
+        break;
+      default:
+        this._waypoints = this._sourcedTripWaypoints.slice();
+    }
+
+    this._currentSortType = sortType;
+  }
+
+  _handleSortTypeChange(sortType) {
+    if (this._currentSortType === sortType) {
+      return;
+    }
+
+    this._sortWaypoints(sortType);
+    this._clearTripList();
+    this._renderAllWaypoints();
   }
 
   _renderBoard() {

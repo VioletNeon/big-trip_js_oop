@@ -3,11 +3,7 @@ import {checkOfferTypes} from '../utils/common.js';
 import {getSelectedDestinationData, render, RenderPosition, completelyRemove} from '../utils/render.js';
 import {getOfferTemplate} from '../view/get-offer-template';
 import {getDestinationTemplate} from '../view/get-destination-template';
-
-const Mode = {
-  DEFAULT: 'DEFAULT',
-  CREATING: 'CREATING',
-};
+import {Mode} from '../utils/const.js';
 
 export default class NewPoint {
   constructor(container, buttonElement, destinations, offersPoint) {
@@ -31,7 +27,7 @@ export default class NewPoint {
     this._creatingFormComponent.setCalendarFormInput();
 
     this._buttonElement.disabled = true;
-    this._mode = Mode.CREATING;
+    this._mode = Mode.EDITING;
     document.addEventListener('keydown', this._escKeyDownHandler);
     render(this._container, this._creatingFormComponent, RenderPosition.AFTERBEGIN);
   }
@@ -70,7 +66,7 @@ export default class NewPoint {
   }
 
   removeCreatingForm() {
-    if (this._mode === Mode.CREATING) {
+    if (this._mode === Mode.EDITING) {
       completelyRemove(this._creatingFormComponent);
       this._buttonElement.disabled = false;
     }
