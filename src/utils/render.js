@@ -1,5 +1,13 @@
 import Abstract from '../view/abstract.js';
 
+const getSelectedDestinationData = (selectedDestinationName, destinations) => {
+  for (const {name, description, pictures} of destinations) {
+    if (selectedDestinationName === name) {
+      return {description, pictures};
+    }
+  }
+};
+
 const RenderPosition = {
   AFTERBEGIN: 'afterbegin',
   BEFOREEND: 'beforeend',
@@ -48,13 +56,19 @@ const replace = (newChild, oldChild) => {
   parent.replaceChild(newChild, oldChild);
 };
 
-const remove = (component) => {
+const removeNode = (component) => {
+  component.getElement().remove();
+};
+
+const completelyRemove = (component) => {
   if (!(component instanceof Abstract)) {
     throw new Error('Can remove only components');
   }
 
-  component.getElement().remove();
-  component.removeElement();
+  if (document.contains(component.getElement())) {
+    removeNode(component);
+    component.removeElement();
+  }
 };
 
-export {RenderPosition, render, createElement, replace, remove};
+export {getSelectedDestinationData, RenderPosition, render, createElement, replace, completelyRemove};
