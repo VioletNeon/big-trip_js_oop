@@ -4,13 +4,13 @@ import {changeDateFormat, flatpickr} from '../utils/date.js';
 import {getPictureTemplate} from './get-picture-template.js';
 
 export default class EditingForm extends AbstractView {
-  constructor(point, destinations, offers) {
+  constructor(point, destinations, offersPoint) {
     super();
     this._point = point;
     this._destinations = destinations;
-    this._offers = offers;
+    this._offersPoint = offersPoint;
     this._editingFormSubmitHandler = this._editingFormSubmitHandler.bind(this);
-    this._rollupButtonClickHandler = this._rollupButtonClickHandler.bind(this);
+    this._rollDownButtonClickHandler = this._rollDownButtonClickHandler.bind(this);
     this._groupTypeChangeHandler = this._groupTypeChangeHandler.bind(this);
     this._inputEventDestinationChangeHandler = this._inputEventDestinationChangeHandler.bind(this);
   }
@@ -37,7 +37,7 @@ export default class EditingForm extends AbstractView {
     const {type, dateFrom, dateTo, basePrice, destination, offers} = this._point;
     const {name, description, pictures} = destination;
     const destinationNames = this._destinations.map(({name}) => name);
-    const allOffers = this._offers.map(({type}) => type);
+    const allOffers = this._offersPoint.map(({type}) => type);
     const typeWaypoint = capitalizeFirstLetter(type);
     const eventDateAttributeValueFrom = changeDateFormat(dateFrom, 'YY/MM/DD HH:mm');
     const eventDateAttributeValueTo = changeDateFormat(dateTo, 'YY/MM/DD HH:mm');
@@ -116,11 +116,11 @@ export default class EditingForm extends AbstractView {
 
   _editingFormSubmitHandler(evt) {
     evt.preventDefault();
-    this._callback.editingFormSubmit();
+    this._callback.editingFormSubmit(this._point);
   }
 
-  _rollupButtonClickHandler() {
-    this._callback.rollupButtonClick();
+  _rollDownButtonClickHandler() {
+    this._callback.rollDownButtonClick();
   }
 
   _groupTypeChangeHandler(evt) {
@@ -136,9 +136,9 @@ export default class EditingForm extends AbstractView {
     this.getElement().querySelector('form').addEventListener('submit', this._editingFormSubmitHandler);
   }
 
-  setRollupButtonClickHandler(callback) {
-    this._callback.rollupButtonClick = callback;
-    this.getElement().querySelector('.event__rollup-btn').addEventListener('click', this._rollupButtonClickHandler);
+  setRollDownButtonClickHandler(callback) {
+    this._callback.rollDownButtonClick = callback;
+    this.getElement().querySelector('.event__rollup-btn').addEventListener('click', this._rollDownButtonClickHandler);
   }
 
   setGroupTypeChangeHandler(callback) {

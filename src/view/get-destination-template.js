@@ -7,10 +7,8 @@ const getDestinationTemplate = (destination) => {
   const {description, pictures} = destination;
   const destinationPictures = getPictureTemplate(pictures);
   if (description || destinationPictures.length > 0) {
-    const template = `
-      <h3 class="event__section-title  event__section-title--destination">Destination</h3>
+    const template = `<h3 class="event__section-title  event__section-title--destination">Destination</h3>
       <p class="event__destination-description ${description ? '' : 'visually-hidden'}">${description}</p>
-
       <div class="event__photos-container ${destinationPictures ? '' : 'visually-hidden'}">
         <div class="event__photos-tape">
           ${destinationPictures}

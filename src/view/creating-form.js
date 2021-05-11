@@ -2,11 +2,10 @@ import AbstractView from './abstract.js';
 import {capitalizeFirstLetter} from '../utils/common.js';
 import {flatpickr} from '../utils/date.js';
 
-
 export default class CreatingForm extends AbstractView {
-  constructor(offers, destinations) {
+  constructor(destinations, offersPoint) {
     super();
-    this._offers = offers;
+    this._offersPoint = offersPoint;
     this._destinations = destinations;
     this._creatingFormSubmitHandler = this._creatingFormSubmitHandler.bind(this);
     this._groupTypeChangeHandler = this._groupTypeChangeHandler.bind(this);
@@ -15,9 +14,9 @@ export default class CreatingForm extends AbstractView {
 
   getTemplate() {
     const names = this._destinations.map(({name}) => name);
-    const offerTypes = this._offers.map(({type}) => type);
-    const offerTypesTemplate = offerTypes.map((item) => {return `
-      <div class="event__type-item">
+    const offerTypes = this._offersPoint.map(({type}) => type);
+    const offerTypesTemplate = offerTypes.map((item) => {
+      return `<div class="event__type-item">
         <input id="event-type-${item}-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${item}">
         <label class="event__type-label  event__type-label--${item}" for="event-type-${item}-1">${capitalizeFirstLetter(item)}</label>
       </div>`;}).join(' ');
