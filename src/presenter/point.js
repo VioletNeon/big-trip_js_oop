@@ -1,9 +1,6 @@
 import EditingFormView from '../view/editing-form.js';
 import WaypointView from '../view/waypoint.js';
-import {getSelectedDestinationData, render, replace, completelyRemove} from '../utils/render.js';
-import {checkOfferTypes} from '../utils/common';
-import {getOfferTemplate} from '../view/get-offer-template';
-import {getDestinationTemplate} from '../view/get-destination-template';
+import {render, replace, completelyRemove} from '../utils/render.js';
 import {Mode} from '../utils/const.js';
 
 export default class Point {
@@ -22,8 +19,6 @@ export default class Point {
     this._rollUpButtonClickHandler = this._rollUpButtonClickHandler.bind(this);
     this._rollDownButtonClickHandler = this._rollDownButtonClickHandler.bind(this);
     this._escKeyDownHandler = this._escKeyDownHandler.bind(this);
-    this._groupTypeChangeHandler = this._groupTypeChangeHandler.bind(this);
-    this._inputEventDestinationChangeHandler = this._inputEventDestinationChangeHandler.bind(this);
     this._editingFormSubmitHandler = this._editingFormSubmitHandler.bind(this);
     this._favoriteClickHandler = this._favoriteClickHandler.bind(this);
   }
@@ -39,7 +34,7 @@ export default class Point {
 
     this._waypointComponent.setFavoriteClickHandler(this._favoriteClickHandler);
     this._waypointComponent.setRollUpButtonClickHandler(this._rollUpButtonClickHandler);
-    this._editingFormComponent.setInputEventDestinationChangeHandler(this._inputEventDestinationChangeHandler);
+    this._editingFormComponent.setInnerHandlers();
     this._editingFormComponent.setCalendarFormInput();
     this._editingFormComponent.setRollDownButtonClickHandler(this._rollDownButtonClickHandler);
     this._editingFormComponent.setEditingFormSubmitHandler(this._editingFormSubmitHandler);
@@ -106,7 +101,6 @@ export default class Point {
   _rollUpButtonClickHandler() {
     this._replaceWaypointToEditingForm();
     document.addEventListener('keydown', this._escKeyDownHandler);
-    this._editingFormComponent.setGroupTypeChangeHandler(this._groupTypeChangeHandler);
     this._removeCreatingForm();
   }
 
@@ -115,21 +109,6 @@ export default class Point {
     document.removeEventListener('keydown', this._escKeyDownHandler);
   }
 
-  _groupTypeChangeHandler(evt) {
-    const offers = checkOfferTypes(evt.target.value, this._offersPoint);
-    getOfferTemplate(offers);
-
-    const eventTypeIcon = this._editingFormComponent.getElement().querySelector('.event__type-icon');
-    eventTypeIcon.src = `img/icons/${evt.target.value}.png`;
-
-    const typeOutput = this._editingFormComponent.getElement().querySelector('.event__type-output');
-    typeOutput.textContent = evt.target.value;
-  }
-
-  _inputEventDestinationChangeHandler(evt) {
-    const destination = getSelectedDestinationData(evt.target.value, this._destinations);
-    getDestinationTemplate(destination);
-  }
 
   _editingFormSubmitHandler(point) {
     this._changeData(point);

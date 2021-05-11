@@ -1,9 +1,12 @@
-import AbstractView from './abstract.js';
-import {capitalizeFirstLetter} from '../utils/common.js';
+import SmartView from './smart.js';
+import {capitalizeFirstLetter, checkOfferTypes} from '../utils/common.js';
 import {changeDateFormat, flatpickr} from '../utils/date.js';
 import {getPictureTemplate} from './get-picture-template.js';
+import {getSelectedDestinationData} from '../utils/render.js';
+import {getOfferTemplate} from './get-offer-template.js';
+import {getDestinationTemplate} from './get-destination-template.js';
 
-export default class EditingForm extends AbstractView {
+export default class EditingForm extends SmartView {
   constructor(point, destinations, offersPoint) {
     super();
     this._point = point;
@@ -124,11 +127,25 @@ export default class EditingForm extends AbstractView {
   }
 
   _groupTypeChangeHandler(evt) {
-    this._callback.groupTypeChange(evt);
+    const offers = checkOfferTypes(evt.target.value, this._offersPoint);
+    getOfferTemplate(offers);
+
+    const eventTypeIcon = this.getElement().querySelector('.event__type-icon');
+    eventTypeIcon.src = `img/icons/${evt.target.value}.png`;
+
+    const typeOutput = this.getElement().querySelector('.event__type-output');
+    typeOutput.textContent = evt.target.value;
+    this.updateData({
+      type: evt.target.value,
+    }, true);
   }
 
   _inputEventDestinationChangeHandler(evt) {
-    this._callback.inputEventDestinationChange(evt);
+    const destination = getSelectedDestinationData(evt.target.value, this._destinations);
+    getDestinationTemplate(destination);
+    this.updateData({
+      destination: Object.assign({}, {name: evt.target.value}, destination),
+    }, true);
   }
 
   setEditingFormSubmitHandler(callback) {
@@ -141,13 +158,8 @@ export default class EditingForm extends AbstractView {
     this.getElement().querySelector('.event__rollup-btn').addEventListener('click', this._rollDownButtonClickHandler);
   }
 
-  setGroupTypeChangeHandler(callback) {
-    this._callback.groupTypeChange = callback;
+  setInnerHandlers() {
     this.getElement().querySelector('.event__type-group').addEventListener('change', this._groupTypeChangeHandler);
-  }
-
-  setInputEventDestinationChangeHandler(callback) {
-    this._callback.inputEventDestinationChange = callback;
     this.getElement().querySelector('.event__input--destination').addEventListener('change', this._inputEventDestinationChangeHandler);
   }
 
