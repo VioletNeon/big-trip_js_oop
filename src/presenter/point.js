@@ -4,11 +4,7 @@ import {getSelectedDestinationData, render, replace, completelyRemove} from '../
 import {checkOfferTypes} from '../utils/common';
 import {getOfferTemplate} from '../view/get-offer-template';
 import {getDestinationTemplate} from '../view/get-destination-template';
-
-const Mode = {
-  DEFAULT: 'DEFAULT',
-  EDITING: 'EDITING',
-};
+import {Mode} from '../utils/const.js';
 
 export default class Point {
   constructor(container, destinations, offersPoint, changeData, changeMode, removeCreatingForm) {
