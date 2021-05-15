@@ -143,7 +143,7 @@ const generatePoint = () => {
     type: type,
     destination: getRandomItem(destinations),
     isFavorite: Boolean(getRandomInteger()),
-    offers: checkOfferTypes(type, offersPoint),
+    offers: getRandomItems(checkOfferTypes(type, offersPoint)),
     id: pointIdentifier(),
   };
 };

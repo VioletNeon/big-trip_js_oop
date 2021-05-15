@@ -9,21 +9,25 @@ import {getDestinationTemplate} from './get-destination-template.js';
 export default class EditingForm extends SmartView {
   constructor(point, destinations, offersPoint) {
     super();
-    this._point = point;
+    this._point = Object.assign({}, point);
     this._destinations = destinations;
     this._offersPoint = offersPoint;
+    this._isPreviousPoint = true;
     this._editingFormSubmitHandler = this._editingFormSubmitHandler.bind(this);
-    this._rollDownButtonClickHandler = this._rollDownButtonClickHandler.bind(this);
     this._groupTypeChangeHandler = this._groupTypeChangeHandler.bind(this);
+    //this._inputTimeStartChangeHandler = this._inputTimeStartChangeHandler.bind(this);
+    //this._inputTimeEndChangeHandler = this._inputTimeEndChangeHandler.bind(this);
     this._inputEventDestinationChangeHandler = this._inputEventDestinationChangeHandler.bind(this);
+    this._rollDownButtonClickHandler = this._rollDownButtonClickHandler.bind(this);
   }
 
   getOfferTemplate(pointOffers) {
     if (pointOffers) {
       const templates = pointOffers.map(({title, price}) => {
+        const isSelectedOffer = this._point.offers.map((item) => item.title).includes(title);
         const offerTitle = [title].join('-');
         return `<div class="event__offer-selector">
-        <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offerTitle}-1" type="checkbox" name="event-offer-luggage">
+        <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offerTitle}-1" ${this._isPreviousPoint && isSelectedOffer ? 'checked' : ''} type="checkbox" name="event-offer-luggage">
         <label class="event__offer-label" for="event-offer-${offerTitle}-1">
           <span class="event__offer-title">${title}</span>
           &plus;&euro;&nbsp;
@@ -37,7 +41,8 @@ export default class EditingForm extends SmartView {
   }
 
   getTemplate() {
-    const {type, dateFrom, dateTo, basePrice, destination, offers} = this._point;
+    const {type, dateFrom, dateTo, basePrice, destination} = this._point;
+    const offers = checkOfferTypes(type, this._offersPoint);
     const {name, description, pictures} = destination;
     const destinationNames = this._destinations.map(({name}) => name);
     const allOffers = this._offersPoint.map(({type}) => type);
@@ -78,10 +83,10 @@ export default class EditingForm extends SmartView {
         </div>
         <div class="event__field-group  event__field-group--time">
           <label class="visually-hidden" for="event-start-time-1">From</label>
-          <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="${eventDateAttributeValueFrom}">
+          <input class="event__input  event__input--time" id="event-start-time-1" type="text" data-form="${dateFrom}" name="event-start-time" value="${eventDateAttributeValueFrom}">
           &mdash;
           <label class="visually-hidden" for="event-end-time-1">To</label>
-          <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="${eventDateAttributeValueTo}">
+          <input class="event__input  event__input--time" id="event-end-time-1" type="text" data-form="${dateTo}" name="event-end-time" value="${eventDateAttributeValueTo}">
         </div>
         <div class="event__field-group  event__field-group--price">
           <label class="event__label" for="event-price-1">
@@ -119,14 +124,12 @@ export default class EditingForm extends SmartView {
 
   _editingFormSubmitHandler(evt) {
     evt.preventDefault();
+    this._isPreviousPoint = true;
     this._callback.editingFormSubmit(this._point);
   }
 
-  _rollDownButtonClickHandler() {
-    this._callback.rollDownButtonClick();
-  }
-
   _groupTypeChangeHandler(evt) {
+    this._isPreviousPoint = false;
     const offers = checkOfferTypes(evt.target.value, this._offersPoint);
     getOfferTemplate(offers);
 
@@ -136,6 +139,7 @@ export default class EditingForm extends SmartView {
     const typeOutput = this.getElement().querySelector('.event__type-output');
     typeOutput.textContent = evt.target.value;
     this.updateData({
+      offers: offers,
       type: evt.target.value,
     }, true);
   }
@@ -143,9 +147,27 @@ export default class EditingForm extends SmartView {
   _inputEventDestinationChangeHandler(evt) {
     const destination = getSelectedDestinationData(evt.target.value, this._destinations);
     getDestinationTemplate(destination);
-    this.updateData({
-      destination: Object.assign({}, {name: evt.target.value}, destination),
-    }, true);
+    //this.updateData({
+    //  destination: Object.assign({}, {name: evt.target.value}, destination),
+    //}, true);
+  }
+
+  //_inputTimeStartChangeHandler(evt) {
+  //  const dateFrom = evt.target.dataset.form;
+  //  this.updateData({
+  //    destination: Object.assign({}, {dateFrom: dateFrom}),
+  //  }, true);
+  //}
+
+  //_inputTimeEndChangeHandler(evt) {
+  //  this.updateData({
+  //    destination: Object.assign({}, {dateTo: evt.target.value}),
+  //  }, true);
+  //}
+
+  _rollDownButtonClickHandler() {
+    this._isPreviousPoint = true;
+    this._callback.rollDownButtonClick();
   }
 
   setEditingFormSubmitHandler(callback) {
@@ -161,9 +183,12 @@ export default class EditingForm extends SmartView {
   setInnerHandlers() {
     this.getElement().querySelector('.event__type-group').addEventListener('change', this._groupTypeChangeHandler);
     this.getElement().querySelector('.event__input--destination').addEventListener('change', this._inputEventDestinationChangeHandler);
+    //this.getElement().querySelector('#event-start-time-1').addEventListener('input', this._inputTimeStartChangeHandler);
+    //this.getElement().querySelector('#event-end-time-1').addEventListener('input', this._inputTimeEndChangeHandler);
+    this._setCalendarFormInput();
   }
 
-  setCalendarFormInput() {
+  _setCalendarFormInput() {
     const eventTimeInput = this.getElement().querySelectorAll('.event__input--time');
     if (eventTimeInput.length > 0) {
       eventTimeInput.forEach((item) => {
