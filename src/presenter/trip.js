@@ -1,4 +1,4 @@
-import WaypointList from '../view/waypoint-list';
+import WaypointList from '../view/waypoint-list.js';
 import SortView from '../view/sort.js';
 import SiteMenuView from '../view/site-menu.js';
 import FilterView from '../view/filter.js';

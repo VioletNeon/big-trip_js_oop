@@ -8,7 +8,9 @@ export default class Smart extends AbstractView {
     this.removeElement();
 
     const newElement = this.getElement();
-
+    if (parent === null) {
+      return;
+    }
     parent.replaceChild(newElement, prevElement);
   }
 

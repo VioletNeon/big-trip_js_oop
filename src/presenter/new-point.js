@@ -1,10 +1,10 @@
-import CreatingFormView from '../view/creating-form';
+import CreatingFormView from '../view/creating-form.js';
 import {checkOfferTypes, getIdentifier} from '../utils/common.js';
 import {getSelectedDestinationData, render, RenderPosition, completelyRemove} from '../utils/render.js';
-import {getOfferTemplate} from '../view/get-offer-template';
-import {getDestinationTemplate} from '../view/get-destination-template';
+import {getOfferTemplate} from '../view/get-offer-template.js';
+import {getDestinationTemplate} from '../view/get-destination-template.js';
 import {Mode} from '../utils/const.js';
-import {dayjs} from '../utils/date';
+import {dayjs} from '../utils/date.js';
 
 const newPointId = getIdentifier();
 

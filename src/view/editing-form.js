@@ -31,7 +31,6 @@ export default class EditingForm extends SmartView {
     this._inputBasePriceChangeHandler = this._inputBasePriceChangeHandler.bind(this);
   }
 
-  // Надо пересмотреть условие checked в input
   getOfferTemplate(pointOffers) {
     if (pointOffers) {
       const templates = pointOffers.map(({title, price}) => {
