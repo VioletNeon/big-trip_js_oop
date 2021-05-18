@@ -48,4 +48,9 @@ const updateItem = (items, update) => {
   ];
 };
 
-export {capitalizeFirstLetter, getRandomItem, getRandomItems, getRandomInteger, checkOfferTypes, updateItem};
+const getIdentifier = () => {
+  let id = 0;
+  return () => id++;
+};
+
+export {capitalizeFirstLetter, getRandomItem, getRandomItems, getRandomInteger, checkOfferTypes, updateItem, getIdentifier};

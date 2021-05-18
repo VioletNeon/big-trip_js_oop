@@ -1,6 +1,6 @@
 import SmartView from './smart.js';
 import {capitalizeFirstLetter, checkOfferTypes} from '../utils/common.js';
-import {changeDateFormat, flatpickr} from '../utils/date.js';
+import {changeDateFormat, flatpickr, dayjs} from '../utils/date.js';
 import {getPictureTemplate} from './get-picture-template.js';
 import {getSelectedDestinationData} from '../utils/render.js';
 import {getOfferTemplate} from './get-offer-template.js';
@@ -13,21 +13,32 @@ export default class EditingForm extends SmartView {
     this._destinations = destinations;
     this._offersPoint = offersPoint;
     this._isPreviousPoint = true;
+    this._editedPoint = {
+      basePrice: point.basePrice,
+      dateFrom: point.dateFrom,
+      dateTo: point.dateTo,
+      type: point.type,
+      destination: point.destination,
+      offers: point.offers,
+    };
     this._editingFormSubmitHandler = this._editingFormSubmitHandler.bind(this);
     this._groupTypeChangeHandler = this._groupTypeChangeHandler.bind(this);
-    //this._inputTimeStartChangeHandler = this._inputTimeStartChangeHandler.bind(this);
-    //this._inputTimeEndChangeHandler = this._inputTimeEndChangeHandler.bind(this);
+    this._inputTimeStartChangeHandler = this._inputTimeStartChangeHandler.bind(this);
+    this._inputTimeEndChangeHandler = this._inputTimeEndChangeHandler.bind(this);
     this._inputEventDestinationChangeHandler = this._inputEventDestinationChangeHandler.bind(this);
     this._rollDownButtonClickHandler = this._rollDownButtonClickHandler.bind(this);
+    this._inputOfferClickHandler = this._inputOfferClickHandler.bind(this);
+    this._inputBasePriceChangeHandler = this._inputBasePriceChangeHandler.bind(this);
   }
 
+  // Надо пересмотреть условие checked в input
   getOfferTemplate(pointOffers) {
     if (pointOffers) {
       const templates = pointOffers.map(({title, price}) => {
         const isSelectedOffer = this._point.offers.map((item) => item.title).includes(title);
         const offerTitle = [title].join('-');
         return `<div class="event__offer-selector">
-        <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offerTitle}-1" ${this._isPreviousPoint && isSelectedOffer ? 'checked' : ''} type="checkbox" name="event-offer-luggage">
+        <input class="event__offer-checkbox  visually-hidden" data-title="${title}" data-price="${price}" id="event-offer-${offerTitle}-1" ${this._isPreviousPoint && isSelectedOffer ? 'checked' : ''} type="checkbox" name="event-offer">
         <label class="event__offer-label" for="event-offer-${offerTitle}-1">
           <span class="event__offer-title">${title}</span>
           &plus;&euro;&nbsp;
@@ -83,10 +94,10 @@ export default class EditingForm extends SmartView {
         </div>
         <div class="event__field-group  event__field-group--time">
           <label class="visually-hidden" for="event-start-time-1">From</label>
-          <input class="event__input  event__input--time" id="event-start-time-1" type="text" data-form="${dateFrom}" name="event-start-time" value="${eventDateAttributeValueFrom}">
+          <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="${eventDateAttributeValueFrom}">
           &mdash;
           <label class="visually-hidden" for="event-end-time-1">To</label>
-          <input class="event__input  event__input--time" id="event-end-time-1" type="text" data-form="${dateTo}" name="event-end-time" value="${eventDateAttributeValueTo}">
+          <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="${eventDateAttributeValueTo}">
         </div>
         <div class="event__field-group  event__field-group--price">
           <label class="event__label" for="event-price-1">
@@ -124,6 +135,7 @@ export default class EditingForm extends SmartView {
 
   _editingFormSubmitHandler(evt) {
     evt.preventDefault();
+    this.updateData(this._editedPoint, true);
     this._isPreviousPoint = true;
     this._callback.editingFormSubmit(this._point);
   }
@@ -138,32 +150,41 @@ export default class EditingForm extends SmartView {
 
     const typeOutput = this.getElement().querySelector('.event__type-output');
     typeOutput.textContent = evt.target.value;
-    this.updateData({
-      offers: offers,
-      type: evt.target.value,
-    }, true);
+    this._editedPoint.offers = [];
+    this._editedPoint.type = evt.target.value;
+    this._setInputOfferClickHandler();
+  }
+
+  _inputOfferClickHandler(evt) {
+    const selectedOfferIndex = this._editedPoint.offers.findIndex((item) => item.title === evt.target.dataset.title);
+    if (evt.target.checked && selectedOfferIndex === -1) {
+      this._editedPoint.offers.splice(0, 0, {title: evt.target.dataset.title, price: +evt.target.dataset.price});
+    } else if (selectedOfferIndex !== -1) {
+      this._editedPoint.offers.splice(selectedOfferIndex, 1);
+    }
+  }
+
+  _setInputOfferClickHandler() {
+    this.getElement().querySelector('.event__details').addEventListener('change', this._inputOfferClickHandler);
   }
 
   _inputEventDestinationChangeHandler(evt) {
     const destination = getSelectedDestinationData(evt.target.value, this._destinations);
     getDestinationTemplate(destination);
-    //this.updateData({
-    //  destination: Object.assign({}, {name: evt.target.value}, destination),
-    //}, true);
+    this._editedPoint.destination = Object.assign({}, {name: evt.target.value}, destination);
   }
 
-  //_inputTimeStartChangeHandler(evt) {
-  //  const dateFrom = evt.target.dataset.form;
-  //  this.updateData({
-  //    destination: Object.assign({}, {dateFrom: dateFrom}),
-  //  }, true);
-  //}
+  _inputTimeStartChangeHandler(evt) {
+    this._editedPoint.dateFrom = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
+  }
 
-  //_inputTimeEndChangeHandler(evt) {
-  //  this.updateData({
-  //    destination: Object.assign({}, {dateTo: evt.target.value}),
-  //  }, true);
-  //}
+  _inputTimeEndChangeHandler(evt) {
+    this._editedPoint.dateTo = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
+  }
+
+  _inputBasePriceChangeHandler(evt) {
+    this._editedPoint.basePrice = evt.target.value;
+  }
 
   _rollDownButtonClickHandler() {
     this._isPreviousPoint = true;
@@ -183,9 +204,17 @@ export default class EditingForm extends SmartView {
   setInnerHandlers() {
     this.getElement().querySelector('.event__type-group').addEventListener('change', this._groupTypeChangeHandler);
     this.getElement().querySelector('.event__input--destination').addEventListener('change', this._inputEventDestinationChangeHandler);
-    //this.getElement().querySelector('#event-start-time-1').addEventListener('input', this._inputTimeStartChangeHandler);
-    //this.getElement().querySelector('#event-end-time-1').addEventListener('input', this._inputTimeEndChangeHandler);
+    this.getElement().querySelector('#event-start-time-1').addEventListener('input', this._inputTimeStartChangeHandler);
+    this.getElement().querySelector('#event-end-time-1').addEventListener('input', this._inputTimeEndChangeHandler);
+    this._setInputOfferClickHandler();
+    this.getElement().querySelector('.event__input--price').addEventListener('input', this._inputBasePriceChangeHandler);
     this._setCalendarFormInput();
+  }
+
+  reset(point) {
+    this.updateData(
+      point,
+    );
   }
 
   _setCalendarFormInput() {

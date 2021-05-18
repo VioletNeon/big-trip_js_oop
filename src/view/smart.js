@@ -1,8 +1,6 @@
 import AbstractView from './abstract.js';
 
 export default class Smart extends AbstractView {
-  restoreHandlers() {
-  }
 
   updateElement() {
     const prevElement = this.getElement();

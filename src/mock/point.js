@@ -1,4 +1,4 @@
-import {getRandomItems, getRandomItem, getRandomInteger, checkOfferTypes} from '../utils/common.js';
+import {getRandomItems, getRandomItem, getRandomInteger, checkOfferTypes, getIdentifier} from '../utils/common.js';
 import {dayjs} from '../utils/date.js';
 
 const MAX_OFFER_PRICE = 200;
@@ -95,11 +95,6 @@ const pointPictures = [
     'description': 'Architecture park',
   },
 ];
-
-const getIdentifier = () => {
-  let id = 0;
-  return () => id++;
-};
 
 const pointIdentifier = getIdentifier();
 

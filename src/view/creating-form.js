@@ -1,8 +1,8 @@
-import AbstractView from './abstract.js';
+import SmartView from './smart.js';
 import {capitalizeFirstLetter} from '../utils/common.js';
 import {flatpickr} from '../utils/date.js';
 
-export default class CreatingForm extends AbstractView {
+export default class CreatingForm extends SmartView {
   constructor(destinations, offersPoint) {
     super();
     this._offersPoint = offersPoint;
@@ -10,6 +10,10 @@ export default class CreatingForm extends AbstractView {
     this._creatingFormSubmitHandler = this._creatingFormSubmitHandler.bind(this);
     this._groupTypeChangeHandler = this._groupTypeChangeHandler.bind(this);
     this._inputEventDestinationChangeHandler = this._inputEventDestinationChangeHandler.bind(this);
+    this._inputOfferClickHandler = this._inputOfferClickHandler.bind(this);
+    this._inputTimeStartChangeHandler = this._inputTimeStartChangeHandler.bind(this);
+    this._inputTimeEndChangeHandler = this._inputTimeEndChangeHandler.bind(this);
+    this._inputBasePriceChangeHandler = this._inputBasePriceChangeHandler.bind(this);
   }
 
   getTemplate() {
@@ -94,6 +98,22 @@ export default class CreatingForm extends AbstractView {
     this._callback.inputEventDestinationChange(evt);
   }
 
+  _inputOfferClickHandler(evt) {
+    this._callback.inputOfferClick(evt);
+  }
+
+  _inputTimeStartChangeHandler(evt) {
+    this._callback.inputTimeStartChange(evt);
+  }
+
+  _inputTimeEndChangeHandler(evt) {
+    this._callback.inputTimeEndChange(evt);
+  }
+
+  _inputBasePriceChangeHandler(evt) {
+    this._callback.inputBasePriceChange(evt);
+  }
+
   setCreatingFormSubmitHandler(callback) {
     this._callback.creatingFormSubmit = callback;
     this.getElement().querySelector('form').addEventListener('submit', this._creatingFormSubmitHandler);
@@ -119,5 +139,25 @@ export default class CreatingForm extends AbstractView {
         });
       });
     }
+  }
+
+  setInputOfferClickHandler(callback) {
+    this._callback.inputOfferClick = callback;
+    this.getElement().querySelector('.event__details').addEventListener('change', this._inputOfferClickHandler);
+  }
+
+  setInputTimeStartChangeHandler(callback) {
+    this._callback.inputTimeStartChange = callback;
+    this.getElement().querySelector('#event-start-time-1').addEventListener('input', this._inputTimeStartChangeHandler);
+  }
+
+  setInputTimeEndChangeHandler(callback) {
+    this._callback.inputTimeEndChange = callback;
+    this.getElement().querySelector('#event-end-time-1').addEventListener('input', this._inputTimeEndChangeHandler);
+  }
+
+  setInputBasePriceHandler(callback) {
+    this._callback.inputBasePriceChange = callback;
+    this.getElement().querySelector('.event__input--price').addEventListener('input', this._inputBasePriceChangeHandler);
   }
 }

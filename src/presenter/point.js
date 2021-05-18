@@ -13,7 +13,6 @@ export default class Point {
     this._removeCreatingForm = removeCreatingForm;
 
     this._waypointComponent = null;
-    this._editingFormComponent = null;
     this._mode = Mode.DEFAULT;
 
     this._rollUpButtonClickHandler = this._rollUpButtonClickHandler.bind(this);
@@ -27,13 +26,12 @@ export default class Point {
     this._point = point;
 
     const previousWaypointComponent = this._waypointComponent;
-    const previousEditingFormComponent = this._editingFormComponent;
 
     this._waypointComponent = new WaypointView(this._point);
     this._waypointComponent.setFavoriteClickHandler(this._favoriteClickHandler);
     this._waypointComponent.setRollUpButtonClickHandler(this._rollUpButtonClickHandler);
 
-    if (previousWaypointComponent === null || previousEditingFormComponent === null) {
+    if (previousWaypointComponent === null) {
       render(this._container, this._waypointComponent);
       return;
     }
@@ -42,12 +40,7 @@ export default class Point {
       replace(this._waypointComponent, previousWaypointComponent);
     }
 
-    if (this._mode === Mode.EDITING) {
-      replace(this._editingFormComponent, previousEditingFormComponent);
-    }
-
     completelyRemove(previousWaypointComponent);
-    completelyRemove(previousEditingFormComponent);
   }
 
   destroy() {
@@ -87,6 +80,7 @@ export default class Point {
   _escKeyDownHandler(evt) {
     if (evt.key === 'Escape' || evt.key === 'Esc') {
       evt.preventDefault();
+      this._editingFormComponent.reset(this._point);
       this._replaceEditingFormToWaypoint();
       document.removeEventListener('keydown', this._escKeyDownHandler);
     }
@@ -103,6 +97,7 @@ export default class Point {
   }
 
   _rollDownButtonClickHandler() {
+    this._editingFormComponent.reset(this._point);
     this._replaceEditingFormToWaypoint();
     document.removeEventListener('keydown', this._escKeyDownHandler);
   }
