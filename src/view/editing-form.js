@@ -1,26 +1,43 @@
-import AbstractView from './abstract.js';
-import {capitalizeFirstLetter} from '../utils/common.js';
-import {changeDateFormat, flatpickr} from '../utils/date.js';
+import SmartView from './smart.js';
+import {capitalizeFirstLetter, checkOfferTypes} from '../utils/common.js';
+import {changeDateFormat, flatpickr, dayjs} from '../utils/date.js';
 import {getPictureTemplate} from './get-picture-template.js';
+import {getSelectedDestinationData} from '../utils/render.js';
+import {getOfferTemplate} from './get-offer-template.js';
+import {getDestinationTemplate} from './get-destination-template.js';
 
-export default class EditingForm extends AbstractView {
+export default class EditingForm extends SmartView {
   constructor(point, destinations, offersPoint) {
     super();
-    this._point = point;
+    this._point = Object.assign({}, point);
     this._destinations = destinations;
     this._offersPoint = offersPoint;
+    this._isPreviousPoint = true;
+    this._editedPoint = {
+      basePrice: point.basePrice,
+      dateFrom: point.dateFrom,
+      dateTo: point.dateTo,
+      type: point.type,
+      destination: point.destination,
+      offers: point.offers,
+    };
     this._editingFormSubmitHandler = this._editingFormSubmitHandler.bind(this);
-    this._rollDownButtonClickHandler = this._rollDownButtonClickHandler.bind(this);
     this._groupTypeChangeHandler = this._groupTypeChangeHandler.bind(this);
+    this._inputTimeStartChangeHandler = this._inputTimeStartChangeHandler.bind(this);
+    this._inputTimeEndChangeHandler = this._inputTimeEndChangeHandler.bind(this);
     this._inputEventDestinationChangeHandler = this._inputEventDestinationChangeHandler.bind(this);
+    this._rollDownButtonClickHandler = this._rollDownButtonClickHandler.bind(this);
+    this._inputOfferClickHandler = this._inputOfferClickHandler.bind(this);
+    this._inputBasePriceChangeHandler = this._inputBasePriceChangeHandler.bind(this);
   }
 
   getOfferTemplate(pointOffers) {
     if (pointOffers) {
       const templates = pointOffers.map(({title, price}) => {
+        const isSelectedOffer = this._point.offers.map((item) => item.title).includes(title);
         const offerTitle = [title].join('-');
         return `<div class="event__offer-selector">
-        <input class="event__offer-checkbox  visually-hidden" id="event-offer-${offerTitle}-1" type="checkbox" name="event-offer-luggage">
+        <input class="event__offer-checkbox  visually-hidden" data-title="${title}" data-price="${price}" id="event-offer-${offerTitle}-1" ${this._isPreviousPoint && isSelectedOffer ? 'checked' : ''} type="checkbox" name="event-offer">
         <label class="event__offer-label" for="event-offer-${offerTitle}-1">
           <span class="event__offer-title">${title}</span>
           &plus;&euro;&nbsp;
@@ -34,7 +51,8 @@ export default class EditingForm extends AbstractView {
   }
 
   getTemplate() {
-    const {type, dateFrom, dateTo, basePrice, destination, offers} = this._point;
+    const {type, dateFrom, dateTo, basePrice, destination} = this._point;
+    const offers = checkOfferTypes(type, this._offersPoint);
     const {name, description, pictures} = destination;
     const destinationNames = this._destinations.map(({name}) => name);
     const allOffers = this._offersPoint.map(({type}) => type);
@@ -116,19 +134,60 @@ export default class EditingForm extends AbstractView {
 
   _editingFormSubmitHandler(evt) {
     evt.preventDefault();
+    this.updateData(this._editedPoint, true);
+    this._isPreviousPoint = true;
     this._callback.editingFormSubmit(this._point);
   }
 
-  _rollDownButtonClickHandler() {
-    this._callback.rollDownButtonClick();
+  _groupTypeChangeHandler(evt) {
+    this._isPreviousPoint = false;
+    const offers = checkOfferTypes(evt.target.value, this._offersPoint);
+    getOfferTemplate(offers);
+
+    const eventTypeIcon = this.getElement().querySelector('.event__type-icon');
+    eventTypeIcon.src = `img/icons/${evt.target.value}.png`;
+
+    const typeOutput = this.getElement().querySelector('.event__type-output');
+    typeOutput.textContent = evt.target.value;
+    this._editedPoint.offers = [];
+    this._editedPoint.type = evt.target.value;
+    this._setInputOfferClickHandler();
   }
 
-  _groupTypeChangeHandler(evt) {
-    this._callback.groupTypeChange(evt);
+  _inputOfferClickHandler(evt) {
+    const selectedOfferIndex = this._editedPoint.offers.findIndex((item) => item.title === evt.target.dataset.title);
+    if (evt.target.checked && selectedOfferIndex === -1) {
+      this._editedPoint.offers.splice(0, 0, {title: evt.target.dataset.title, price: +evt.target.dataset.price});
+    } else if (selectedOfferIndex !== -1) {
+      this._editedPoint.offers.splice(selectedOfferIndex, 1);
+    }
+  }
+
+  _setInputOfferClickHandler() {
+    this.getElement().querySelector('.event__details').addEventListener('change', this._inputOfferClickHandler);
   }
 
   _inputEventDestinationChangeHandler(evt) {
-    this._callback.inputEventDestinationChange(evt);
+    const destination = getSelectedDestinationData(evt.target.value, this._destinations);
+    getDestinationTemplate(destination);
+    this._editedPoint.destination = Object.assign({}, {name: evt.target.value}, destination);
+  }
+
+  _inputTimeStartChangeHandler(evt) {
+    this._editedPoint.dateFrom = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
+  }
+
+  _inputTimeEndChangeHandler(evt) {
+    this._editedPoint.dateTo = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
+  }
+
+  _inputBasePriceChangeHandler(evt) {
+    this._editedPoint.basePrice = evt.target.value;
+  }
+
+  _rollDownButtonClickHandler() {
+    this._isPreviousPoint = true;
+    this._callback.rollDownButtonClick();
   }
 
   setEditingFormSubmitHandler(callback) {
@@ -141,17 +200,23 @@ export default class EditingForm extends AbstractView {
     this.getElement().querySelector('.event__rollup-btn').addEventListener('click', this._rollDownButtonClickHandler);
   }
 
-  setGroupTypeChangeHandler(callback) {
-    this._callback.groupTypeChange = callback;
+  setInnerHandlers() {
     this.getElement().querySelector('.event__type-group').addEventListener('change', this._groupTypeChangeHandler);
-  }
-
-  setInputEventDestinationChangeHandler(callback) {
-    this._callback.inputEventDestinationChange = callback;
     this.getElement().querySelector('.event__input--destination').addEventListener('change', this._inputEventDestinationChangeHandler);
+    this.getElement().querySelector('#event-start-time-1').addEventListener('input', this._inputTimeStartChangeHandler);
+    this.getElement().querySelector('#event-end-time-1').addEventListener('input', this._inputTimeEndChangeHandler);
+    this._setInputOfferClickHandler();
+    this.getElement().querySelector('.event__input--price').addEventListener('input', this._inputBasePriceChangeHandler);
+    this._setCalendarFormInput();
   }
 
-  setCalendarFormInput() {
+  reset(point) {
+    this.updateData(
+      point,
+    );
+  }
+
+  _setCalendarFormInput() {
     const eventTimeInput = this.getElement().querySelectorAll('.event__input--time');
     if (eventTimeInput.length > 0) {
       eventTimeInput.forEach((item) => {

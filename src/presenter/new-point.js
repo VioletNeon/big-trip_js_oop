@@ -1,9 +1,12 @@
-import CreatingFormView from '../view/creating-form';
-import {checkOfferTypes} from '../utils/common.js';
+import CreatingFormView from '../view/creating-form.js';
+import {checkOfferTypes, getIdentifier} from '../utils/common.js';
 import {getSelectedDestinationData, render, RenderPosition, completelyRemove} from '../utils/render.js';
-import {getOfferTemplate} from '../view/get-offer-template';
-import {getDestinationTemplate} from '../view/get-destination-template';
+import {getOfferTemplate} from '../view/get-offer-template.js';
+import {getDestinationTemplate} from '../view/get-destination-template.js';
 import {Mode} from '../utils/const.js';
+import {dayjs} from '../utils/date.js';
+
+const getNewPointId = getIdentifier();
 
 export default class NewPoint {
   constructor(container, buttonElement, destinations, offersPoint) {
@@ -13,18 +16,35 @@ export default class NewPoint {
     this._buttonElement = buttonElement;
     this._creatingFormComponent = new CreatingFormView(this._destinations, this._offersPoint);
     this._mode = Mode.DEFAULT;
+    this._createdPoint = {
+      basePrice: null,
+      dateFrom: dayjs(),
+      dateTo: dayjs(),
+      type: null,
+      destination: null,
+      isFavorite: false,
+      offers: [],
+      id: '0' + getNewPointId(),
+    };
 
     this._escKeyDownHandler = this._escKeyDownHandler.bind(this);
     this._groupTypeChangeHandler = this._groupTypeChangeHandler.bind(this);
     this._inputEventDestinationChangeHandler = this._inputEventDestinationChangeHandler.bind(this);
     this._creatingFormSubmitHandler = this._creatingFormSubmitHandler.bind(this);
+    this._inputOfferClickHandler = this._inputOfferClickHandler.bind(this);
+    this._inputTimeStartChangeHandler = this._inputTimeStartChangeHandler.bind(this);
+    this._inputTimeEndChangeHandler = this._inputTimeEndChangeHandler.bind(this);
+    this._inputBasePriceChangeHandler = this._inputBasePriceChangeHandler.bind(this);
   }
 
   init() {
-    this._creatingFormComponent.setInputEventDestinationChangeHandler(this._inputEventDestinationChangeHandler);
     this._creatingFormComponent.setGroupTypeChangeHandler(this._groupTypeChangeHandler);
-    this._creatingFormComponent.setCreatingFormSubmitHandler(this._creatingFormSubmitHandler);
+    this._creatingFormComponent.setInputEventDestinationChangeHandler(this._inputEventDestinationChangeHandler);
+    this._creatingFormComponent.setInputTimeStartChangeHandler(this._inputTimeStartChangeHandler);
+    this._creatingFormComponent.setInputTimeEndChangeHandler(this._inputTimeEndChangeHandler);
     this._creatingFormComponent.setCalendarFormInput();
+    this._creatingFormComponent.setInputBasePriceHandler(this._inputBasePriceChangeHandler);
+    this._creatingFormComponent.setCreatingFormSubmitHandler(this._creatingFormSubmitHandler);
 
     this._buttonElement.disabled = true;
     this._mode = Mode.EDITING;
@@ -51,11 +71,37 @@ export default class NewPoint {
 
     const typeOutput = this._creatingFormComponent.getElement().querySelector('.event__type-output');
     typeOutput.textContent = evt.target.value;
+
+    this._createdPoint.offers = [];
+    this._createdPoint.type = evt.target.value;
+    this._creatingFormComponent.setInputOfferClickHandler(this._inputOfferClickHandler);
+  }
+
+  _inputOfferClickHandler(evt) {
+    const selectedOfferIndex = this._createdPoint.offers.findIndex((item) => item.title === evt.target.dataset.title);
+    if (evt.target.checked && selectedOfferIndex === -1) {
+      this._createdPoint.offers.splice(0, 0, {title: evt.target.dataset.title, price: Number(+evt.target.dataset.price)});
+    } else if (selectedOfferIndex !== -1) {
+      this._createdPoint.offers.splice(selectedOfferIndex, 1);
+    }
+  }
+
+  _inputTimeStartChangeHandler(evt) {
+    this._createdPoint.dateFrom = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
+  }
+
+  _inputTimeEndChangeHandler(evt) {
+    this._createdPoint.dateTo = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
+  }
+
+  _inputBasePriceChangeHandler(evt) {
+    this._createdPoint.basePrice = evt.target.value;
   }
 
   _inputEventDestinationChangeHandler(evt) {
     const destination = getSelectedDestinationData(evt.target.value, this._destinations);
     getDestinationTemplate(destination);
+    this._createdPoint.destination = Object.assign({}, {name: evt.target.value}, destination);
   }
 
   _creatingFormSubmitHandler() {

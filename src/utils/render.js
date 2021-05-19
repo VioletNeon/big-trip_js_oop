@@ -61,6 +61,10 @@ const removeNode = (component) => {
 };
 
 const completelyRemove = (component) => {
+  if (component === undefined) {
+    return;
+  }
+
   if (!(component instanceof Abstract)) {
     throw new Error('Can remove only components');
   }

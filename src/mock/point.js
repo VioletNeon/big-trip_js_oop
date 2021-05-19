@@ -1,4 +1,4 @@
-import {getRandomItems, getRandomItem, getRandomInteger, checkOfferTypes} from '../utils/common.js';
+import {getRandomItems, getRandomItem, getRandomInteger, checkOfferTypes, getIdentifier} from '../utils/common.js';
 import {dayjs} from '../utils/date.js';
 
 const MAX_OFFER_PRICE = 200;
@@ -96,11 +96,6 @@ const pointPictures = [
   },
 ];
 
-const getIdentifier = () => {
-  let id = 0;
-  return () => id++;
-};
-
 const pointIdentifier = getIdentifier();
 
 const generateDate = () => {
@@ -143,7 +138,7 @@ const generatePoint = () => {
     type: type,
     destination: getRandomItem(destinations),
     isFavorite: Boolean(getRandomInteger()),
-    offers: checkOfferTypes(type, offersPoint),
+    offers: getRandomItems(checkOfferTypes(type, offersPoint)),
     id: pointIdentifier(),
   };
 };

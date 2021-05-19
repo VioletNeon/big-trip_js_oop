@@ -1,5 +1,8 @@
 import dayjs from 'dayjs';
 import flatpickr from 'flatpickr';
+import customParseFormat from '../../node_modules/dayjs/plugin/customParseFormat.js';
+
+dayjs.extend(customParseFormat);
 
 const getDuration = (dateFrom, dateTo) => {
   let minutes = dayjs(dateTo).diff(dateFrom, 'm');

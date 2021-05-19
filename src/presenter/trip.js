@@ -1,4 +1,4 @@
-import WaypointList from '../view/waypoint-list';
+import WaypointList from '../view/waypoint-list.js';
 import SortView from '../view/sort.js';
 import SiteMenuView from '../view/site-menu.js';
 import FilterView from '../view/filter.js';
@@ -29,7 +29,7 @@ export default class Trip {
     this._modeChangeHandler = this._modeChangeHandler.bind(this);
     this._newPointButtonClickHandler = this._newPointButtonClickHandler.bind(this);
     this._removeCreatingFormHandler = this._removeCreatingFormHandler.bind(this);
-    this._handleSortTypeChange = this._handleSortTypeChange.bind(this);
+    this._sortTypeChangeHandler = this._sortTypeChangeHandler.bind(this);
   }
 
   init(waypoints) {
@@ -68,7 +68,7 @@ export default class Trip {
   }
 
   _renderSort() {
-    this._sortComponent.setSortTypeChangeHandler(this._handleSortTypeChange);
+    this._sortComponent.setSortTypeChangeHandler(this._sortTypeChangeHandler);
     render(this._mainContainer, this._sortComponent, RenderPosition.AFTERBEGIN);
   }
 
@@ -113,7 +113,7 @@ export default class Trip {
   _newPointButtonClickHandler() {
     this._newPoint.init();
     this._modeChangeHandler();
-    this._handleSortTypeChange(SortType.DAY);
+    this._sortTypeChangeHandler(SortType.DAY);
     this._sortComponent.setDefaultTripSortInput();
     completelyRemove(this._noWaypointComponent);
   }
@@ -140,7 +140,7 @@ export default class Trip {
     this._currentSortType = sortType;
   }
 
-  _handleSortTypeChange(sortType) {
+  _sortTypeChangeHandler(sortType) {
     if (this._currentSortType === sortType) {
       return;
     }
