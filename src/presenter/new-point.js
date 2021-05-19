@@ -6,7 +6,7 @@ import {getDestinationTemplate} from '../view/get-destination-template.js';
 import {Mode} from '../utils/const.js';
 import {dayjs} from '../utils/date.js';
 
-const newPointId = getIdentifier();
+const getNewPointId = getIdentifier();
 
 export default class NewPoint {
   constructor(container, buttonElement, destinations, offersPoint) {
@@ -24,7 +24,7 @@ export default class NewPoint {
       destination: null,
       isFavorite: false,
       offers: [],
-      id: '0' + newPointId(),
+      id: '0' + getNewPointId(),
     };
 
     this._escKeyDownHandler = this._escKeyDownHandler.bind(this);
@@ -80,7 +80,7 @@ export default class NewPoint {
   _inputOfferClickHandler(evt) {
     const selectedOfferIndex = this._createdPoint.offers.findIndex((item) => item.title === evt.target.dataset.title);
     if (evt.target.checked && selectedOfferIndex === -1) {
-      this._createdPoint.offers.splice(0, 0, {title: evt.target.dataset.title, price: +evt.target.dataset.price});
+      this._createdPoint.offers.splice(0, 0, {title: evt.target.dataset.title, price: Number(+evt.target.dataset.price)});
     } else if (selectedOfferIndex !== -1) {
       this._createdPoint.offers.splice(selectedOfferIndex, 1);
     }
