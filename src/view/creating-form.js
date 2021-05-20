@@ -2,6 +2,7 @@ import SmartView from './smart.js';
 import {capitalizeFirstLetter} from '../utils/common.js';
 import {flatpickr} from '../utils/date.js';
 
+
 export default class CreatingForm extends SmartView {
   constructor(destinations, offersPoint) {
     super();

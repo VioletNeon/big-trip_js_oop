@@ -80,7 +80,7 @@ export default class NewPoint {
   _inputOfferClickHandler(evt) {
     const selectedOfferIndex = this._createdPoint.offers.findIndex((item) => item.title === evt.target.dataset.title);
     if (evt.target.checked && selectedOfferIndex === -1) {
-      this._createdPoint.offers.splice(0, 0, {title: evt.target.dataset.title, price: Number(+evt.target.dataset.price)});
+      this._createdPoint.offers.splice(0, 0, {title: evt.target.dataset.title, price: Number(evt.target.dataset.price)});
     } else if (selectedOfferIndex !== -1) {
       this._createdPoint.offers.splice(selectedOfferIndex, 1);
     }
