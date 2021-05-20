@@ -5,6 +5,7 @@ import {getPictureTemplate} from './get-picture-template.js';
 import {getSelectedDestinationData} from '../utils/render.js';
 import {getOfferTemplate} from './get-offer-template.js';
 import {getDestinationTemplate} from './get-destination-template.js';
+import '../../node_modules/flatpickr/dist/flatpickr.min.css';
 
 export default class EditingForm extends SmartView {
   constructor(point, destinations, offersPoint) {
@@ -157,7 +158,7 @@ export default class EditingForm extends SmartView {
   _inputOfferClickHandler(evt) {
     const selectedOfferIndex = this._editedPoint.offers.findIndex((item) => item.title === evt.target.dataset.title);
     if (evt.target.checked && selectedOfferIndex === -1) {
-      this._editedPoint.offers.splice(0, 0, {title: evt.target.dataset.title, price: +evt.target.dataset.price});
+      this._editedPoint.offers.splice(0, 0, {title: evt.target.dataset.title, price: Number(evt.target.dataset.price)});
     } else if (selectedOfferIndex !== -1) {
       this._editedPoint.offers.splice(selectedOfferIndex, 1);
     }
