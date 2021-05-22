@@ -3,29 +3,30 @@ import {checkOfferTypes, getIdentifier} from '../utils/common.js';
 import {getSelectedDestinationData, render, RenderPosition, completelyRemove} from '../utils/render.js';
 import {getOfferTemplate} from '../view/get-offer-template.js';
 import {getDestinationTemplate} from '../view/get-destination-template.js';
-import {Mode} from '../utils/const.js';
+import {UserAction, UpdateType} from '../utils/const.js';
 import {dayjs} from '../utils/date.js';
 
 const getNewPointId = getIdentifier();
 
 export default class NewPoint {
-  constructor(container, buttonElement, destinations, offersPoint) {
+  constructor(container, buttonElement, destinations, offersPoint, changeData) {
     this._container = container;
     this._destinations = destinations;
     this._offersPoint = offersPoint;
     this._buttonElement = buttonElement;
-    this._creatingFormComponent = new CreatingFormView(this._destinations, this._offersPoint);
-    this._mode = Mode.DEFAULT;
+    this._changeData = changeData;
+    this._creatingFormComponent = null;
     this._createdPoint = {
       basePrice: null,
-      dateFrom: dayjs(),
-      dateTo: dayjs(),
+      dateFrom: dayjs().startOf('month'),
+      dateTo: dayjs().startOf('month'),
       type: null,
       destination: null,
       isFavorite: false,
       offers: [],
       id: '0' + getNewPointId(),
     };
+    this._defaultPoint = Object.assign({}, this._createdPoint);
 
     this._escKeyDownHandler = this._escKeyDownHandler.bind(this);
     this._groupTypeChangeHandler = this._groupTypeChangeHandler.bind(this);
@@ -35,9 +36,11 @@ export default class NewPoint {
     this._inputTimeStartChangeHandler = this._inputTimeStartChangeHandler.bind(this);
     this._inputTimeEndChangeHandler = this._inputTimeEndChangeHandler.bind(this);
     this._inputBasePriceChangeHandler = this._inputBasePriceChangeHandler.bind(this);
+    this._buttonCancelClickHandler = this._buttonCancelClickHandler.bind(this);
   }
 
   init() {
+    this._creatingFormComponent = new CreatingFormView(this._destinations.getDestinations(), this._offersPoint.getOffers());
     this._creatingFormComponent.setGroupTypeChangeHandler(this._groupTypeChangeHandler);
     this._creatingFormComponent.setInputEventDestinationChangeHandler(this._inputEventDestinationChangeHandler);
     this._creatingFormComponent.setInputTimeStartChangeHandler(this._inputTimeStartChangeHandler);
@@ -45,9 +48,9 @@ export default class NewPoint {
     this._creatingFormComponent.setCalendarFormInput();
     this._creatingFormComponent.setInputBasePriceHandler(this._inputBasePriceChangeHandler);
     this._creatingFormComponent.setCreatingFormSubmitHandler(this._creatingFormSubmitHandler);
+    this._creatingFormComponent.setButtonCancelClickHandler(this._buttonCancelClickHandler);
 
     this._buttonElement.disabled = true;
-    this._mode = Mode.EDITING;
     document.addEventListener('keydown', this._escKeyDownHandler);
     render(this._container, this._creatingFormComponent, RenderPosition.AFTERBEGIN);
   }
@@ -55,15 +58,12 @@ export default class NewPoint {
   _escKeyDownHandler(evt) {
     if (evt.key === 'Escape' || evt.key === 'Esc') {
       evt.preventDefault();
-      completelyRemove(this._creatingFormComponent);
-      this._buttonElement.disabled = false;
-      document.removeEventListener('keydown', this._escKeyDownHandler);
-      this._mode = Mode.DEFAULT;
+      this.removeCreatingForm();
     }
   }
 
   _groupTypeChangeHandler(evt) {
-    const offers = checkOfferTypes(evt.target.value, this._offersPoint);
+    const offers = checkOfferTypes(evt.target.value, this._offersPoint.getOffers());
     getOfferTemplate(offers);
 
     const eventTypeIcon = this._creatingFormComponent.getElement().querySelector('.event__type-icon');
@@ -71,6 +71,9 @@ export default class NewPoint {
 
     const typeOutput = this._creatingFormComponent.getElement().querySelector('.event__type-output');
     typeOutput.textContent = evt.target.value;
+
+    const inputTypeToggle = this._creatingFormComponent.getElement().querySelector('.event__type-toggle');
+    inputTypeToggle.required = false;
 
     this._createdPoint.offers = [];
     this._createdPoint.type = evt.target.value;
@@ -95,26 +98,41 @@ export default class NewPoint {
   }
 
   _inputBasePriceChangeHandler(evt) {
-    this._createdPoint.basePrice = evt.target.value;
+    this._createdPoint.basePrice = Number(evt.target.value);
   }
 
   _inputEventDestinationChangeHandler(evt) {
-    const destination = getSelectedDestinationData(evt.target.value, this._destinations);
+    const destination = getSelectedDestinationData(evt.target.value, this._destinations.getDestinations());
     getDestinationTemplate(destination);
     this._createdPoint.destination = Object.assign({}, {name: evt.target.value}, destination);
   }
 
   _creatingFormSubmitHandler() {
-    document.removeEventListener('keydown', this._escKeyDownHandler);
-    completelyRemove(this._creatingFormComponent);
-    this._buttonElement.disabled = false;
-    this._mode = Mode.DEFAULT;
+    const isNotCompletelyField = Object.values(this._createdPoint).some((value) => value === null);
+    if (isNotCompletelyField) {
+      this.removeCreatingForm();
+      return;
+    }
+    this._changeData(
+      UserAction.ADD_WAYPOINT,
+      UpdateType.MINOR,
+      this._createdPoint,
+    );
+    this.removeCreatingForm();
   }
 
   removeCreatingForm() {
-    if (this._mode === Mode.EDITING) {
-      completelyRemove(this._creatingFormComponent);
-      this._buttonElement.disabled = false;
+    if (this._creatingFormComponent === null) {
+      return;
     }
+    completelyRemove(this._creatingFormComponent);
+    this._creatingFormComponent = null;
+    this._buttonElement.disabled = false;
+    document.removeEventListener('keydown', this._escKeyDownHandler);
+    this._createdPoint = this._defaultPoint;
+  }
+
+  _buttonCancelClickHandler() {
+    this.removeCreatingForm();
   }
 }

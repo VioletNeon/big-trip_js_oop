@@ -4,6 +4,9 @@ const getDestinationTemplate = (destination) => {
   const sectionDestination = document.querySelector('.event__section--destination');
   sectionDestination.classList.remove('visually-hidden');
   sectionDestination.innerHTML = '';
+  if (!destination) {
+    return;
+  }
   const {description, pictures} = destination;
   const destinationPictures = getPictureTemplate(pictures);
   if (description || destinationPictures.length > 0) {

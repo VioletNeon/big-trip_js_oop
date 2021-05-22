@@ -61,7 +61,7 @@ const removeNode = (component) => {
 };
 
 const completelyRemove = (component) => {
-  if (component === undefined) {
+  if (component === undefined || component === null) {
     return;
   }
 
