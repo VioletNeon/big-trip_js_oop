@@ -1,8 +1,8 @@
 import TripPresenter from './presenter/trip.js';
 import {generatePoint, destinations, offersPoint} from './mock/point.js';
-import Points from './model/points.js';
-import Offers from './model/offers.js';
-import Destinations from './model/destinations.js';
+import PointsModel from './model/points.js';
+import OffersModel from './model/offers.js';
+import DestinationsModel from './model/destinations.js';
 import FilterModel from './model/filter.js';
 import FilterPresenter from './presenter/filter.js';
 import SiteMenuView from './view/site-menu.js';
@@ -16,18 +16,27 @@ const tripEventsContainer = document.querySelector('.trip-events');
 const tripNavigation = headerContainer.querySelector('.trip-controls__navigation');
 const tripFilter = headerContainer.querySelector('.trip-controls__filters');
 
-const pointsModel = new Points();
-const offersModel = new Offers();
-const destinationsModel = new Destinations();
+const pointsModel = new PointsModel();
+const offersModel = new OffersModel();
+const destinationsModel = new DestinationsModel();
 const filterModel = new FilterModel();
 
-pointsModel.setPoints(tripPoints);
-offersModel.setOffers(offersPoint);
-destinationsModel.setDestinations(destinations);
+pointsModel.setDataItems(tripPoints);
+offersModel.setDataItems(offersPoint);
+destinationsModel.setDataItems(destinations);
 
 render(tripNavigation, new SiteMenuView());
 
-const tripPresenter = new TripPresenter(headerContainer, tripEventsContainer, destinationsModel, offersModel, pointsModel, filterModel);
+const tripPresenterArguments = {
+  headerContainer: headerContainer,
+  mainContainer: tripEventsContainer,
+  destinationsModel: destinationsModel,
+  offersModel: offersModel,
+  pointsModel: pointsModel,
+  filterModel: filterModel,
+};
+
+const tripPresenter = new TripPresenter(tripPresenterArguments);
 const filterPresenter = new FilterPresenter(tripFilter, filterModel, pointsModel);
 
 filterPresenter.init();

@@ -193,7 +193,7 @@ export default class EditingForm extends SmartView {
     this._callback.rollDownButtonClick();
   }
 
-  setEditingFormSubmitHandler(callback) {
+  setFormSubmitHandler(callback) {
     this._callback.editingFormSubmit = callback;
     this.getElement().querySelector('form').addEventListener('submit', this._editingFormSubmitHandler);
   }

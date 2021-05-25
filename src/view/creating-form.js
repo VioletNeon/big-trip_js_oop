@@ -122,7 +122,7 @@ export default class CreatingForm extends SmartView {
     this._callback.buttonCancelClick(evt);
   }
 
-  setCreatingFormSubmitHandler(callback) {
+  setFormSubmitHandler(callback) {
     this._callback.creatingFormSubmit = callback;
     this.getElement().querySelector('form').addEventListener('submit', this._creatingFormSubmitHandler);
   }

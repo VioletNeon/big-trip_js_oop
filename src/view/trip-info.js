@@ -26,7 +26,7 @@ export default class TripInfo extends AbstractView {
       if (offers.length > 0) {
         offersPrice = offers.map(({price}) => price).reduce((sum, current) => sum + current);
       }
-      totalPrice = Number(totalPrice) + Number(basePrice) + Number(offersPrice);
+      totalPrice = totalPrice + Number(basePrice) + offersPrice;
     });
 
     const minDateFrom = dayjs(Math.min(...destinationPoints));

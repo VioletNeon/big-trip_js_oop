@@ -18,11 +18,11 @@ export default class Filter {
   }
 
   init() {
-    const filters = this._getFilters();
+    const filters = this._getTypeFilters();
     const prevFilterComponent = this._filterComponent;
 
     this._filterComponent = new FilterView(filters, this._filterModel.getFilter());
-    this._filterComponent.setFilterTypeChangeHandler(this._filterTypeChangeHandler);
+    this._filterComponent.setTypeChangeHandler(this._filterTypeChangeHandler);
 
     if (prevFilterComponent === null) {
       render(this._filterContainer, this._filterComponent);
@@ -45,7 +45,7 @@ export default class Filter {
     this._filterModel.setFilter(UpdateType.MAJOR, filterType);
   }
 
-  _getFilters() {
+  _getTypeFilters() {
     return [
       {
         type: FilterType.EVERYTHING,

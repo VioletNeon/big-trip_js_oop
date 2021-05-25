@@ -9,7 +9,8 @@ import {dayjs} from '../utils/date.js';
 const getNewPointId = getIdentifier();
 
 export default class NewPoint {
-  constructor(container, buttonElement, destinations, offersPoint, changeData) {
+  constructor(newPointArguments) {
+    const {container, buttonElement, destinations, offersPoint, changeData} = newPointArguments;
     this._container = container;
     this._destinations = destinations;
     this._offersPoint = offersPoint;
@@ -40,14 +41,14 @@ export default class NewPoint {
   }
 
   init() {
-    this._creatingFormComponent = new CreatingFormView(this._destinations.getDestinations(), this._offersPoint.getOffers());
+    this._creatingFormComponent = new CreatingFormView(this._destinations.getDataItems(), this._offersPoint.getDataItems());
     this._creatingFormComponent.setGroupTypeChangeHandler(this._groupTypeChangeHandler);
     this._creatingFormComponent.setInputEventDestinationChangeHandler(this._inputEventDestinationChangeHandler);
     this._creatingFormComponent.setInputTimeStartChangeHandler(this._inputTimeStartChangeHandler);
     this._creatingFormComponent.setInputTimeEndChangeHandler(this._inputTimeEndChangeHandler);
     this._creatingFormComponent.setCalendarFormInput();
     this._creatingFormComponent.setInputBasePriceHandler(this._inputBasePriceChangeHandler);
-    this._creatingFormComponent.setCreatingFormSubmitHandler(this._creatingFormSubmitHandler);
+    this._creatingFormComponent.setFormSubmitHandler(this._creatingFormSubmitHandler);
     this._creatingFormComponent.setButtonCancelClickHandler(this._buttonCancelClickHandler);
 
     this._buttonElement.disabled = true;
@@ -63,7 +64,7 @@ export default class NewPoint {
   }
 
   _groupTypeChangeHandler(evt) {
-    const offers = checkOfferTypes(evt.target.value, this._offersPoint.getOffers());
+    const offers = checkOfferTypes(evt.target.value, this._offersPoint.getDataItems());
     getOfferTemplate(offers);
 
     const eventTypeIcon = this._creatingFormComponent.getElement().querySelector('.event__type-icon');
@@ -102,7 +103,7 @@ export default class NewPoint {
   }
 
   _inputEventDestinationChangeHandler(evt) {
-    const destination = getSelectedDestinationData(evt.target.value, this._destinations.getDestinations());
+    const destination = getSelectedDestinationData(evt.target.value, this._destinations.getDataItems());
     getDestinationTemplate(destination);
     this._createdPoint.destination = Object.assign({}, {name: evt.target.value}, destination);
   }
