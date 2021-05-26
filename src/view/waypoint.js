@@ -1,6 +1,7 @@
 import AbstractView from './abstract.js';
 import {capitalizeFirstLetter} from '../utils/common.js';
 import {changeDateFormat, getDuration} from '../utils/date.js';
+import he from 'he';
 
 export default class Waypoint extends AbstractView {
   constructor(point) {
@@ -34,7 +35,7 @@ export default class Waypoint extends AbstractView {
         <div class="event__type">
           <img class="event__type-icon" width="42" height="42" src="img/icons/${type}.png" alt="Event type icon">
         </div>
-        <h3 class="event__title">${typeWaypoint} ${destinationPoint}</h3>
+        <h3 class="event__title">${typeWaypoint} ${he.encode(destinationPoint)}</h3>
         <div class="event__schedule">
           <p class="event__time">
             <time class="event__start-time" datetime="${eventStartDateAttributeFormat}">${eventStartDateTimeFormat}</time>

@@ -1,6 +1,7 @@
 import SmartView from './smart.js';
 import {capitalizeFirstLetter} from '../utils/common.js';
-import {flatpickr} from '../utils/date.js';
+import {flatpickr, dayjs, changeDateFormat} from '../utils/date.js';
+import he from 'he';
 
 
 export default class CreatingForm extends SmartView {
@@ -15,17 +16,19 @@ export default class CreatingForm extends SmartView {
     this._inputTimeStartChangeHandler = this._inputTimeStartChangeHandler.bind(this);
     this._inputTimeEndChangeHandler = this._inputTimeEndChangeHandler.bind(this);
     this._inputBasePriceChangeHandler = this._inputBasePriceChangeHandler.bind(this);
+    this._buttonCancelClickHandler = this._buttonCancelClickHandler.bind(this);
   }
 
   getTemplate() {
     const names = this._destinations.map(({name}) => name);
     const offerTypes = this._offersPoint.map(({type}) => type);
+    const defaultDate = changeDateFormat(dayjs(), 'YY/MM/DD HH:mm');
     const offerTypesTemplate = offerTypes.map((item) => {
       return `<div class="event__type-item">
-        <input id="event-type-${item}-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${item}">
+        <input id="event-type-${item}-1" class="event__type-input  visually-hidden" required type="radio" name="event-type" value="${item}">
         <label class="event__type-label  event__type-label--${item}" for="event-type-${item}-1">${capitalizeFirstLetter(item)}</label>
       </div>`;}).join(' ');
-    const nameDestinationsTemplate = names.map((item) => {return `<option value="${item}"></option>`;}).join(' ');
+    const nameDestinationsTemplate = names.map((item) => {return `<option value="${he.encode(item)}"></option>`;}).join(' ');
     return `<li class="trip-events__item">
 <form class="event event--edit" action="#" method="post">
     <header class="event__header">
@@ -34,7 +37,7 @@ export default class CreatingForm extends SmartView {
             <span class="visually-hidden">Choose event type</span>
             <img class="event__type-icon" width="17" height="17" src="img/icons/flight.png" alt="Event type icon">
           </label>
-          <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" type="checkbox">
+          <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" type="checkbox" required>
           <div class="event__type-list">
             <fieldset class="event__type-group">
               <legend class="visually-hidden">Event type</legend>
@@ -44,7 +47,6 @@ export default class CreatingForm extends SmartView {
         </div>
         <div class="event__field-group  event__field-group--destination">
           <label class="event__label  event__type-output" for="event-destination-1">
-            Flight
           </label>
           <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="" list="destination-list-1">
           <datalist id="destination-list-1">
@@ -53,17 +55,17 @@ export default class CreatingForm extends SmartView {
         </div>
         <div class="event__field-group  event__field-group--time">
           <label class="visually-hidden" for="event-start-time-1">From</label>
-          <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="19/03/19 00:00">
+          <input class="event__input  event__input--time" id="event-start-time-1" type="text" name="event-start-time" value="${defaultDate}">
           &mdash;
           <label class="visually-hidden" for="event-end-time-1">To</label>
-          <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="19/03/19 00:00">
+          <input class="event__input  event__input--time" id="event-end-time-1" type="text" name="event-end-time" value="${defaultDate}">
         </div>
         <div class="event__field-group  event__field-group--price">
           <label class="event__label" for="event-price-1">
             <span class="visually-hidden">Price</span>
             &euro;
           </label>
-          <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="">
+          <input class="event__input  event__input--price" required id="event-price-1" type="number" name="event-price" value="">
         </div>
         <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
         <button class="event__reset-btn" type="reset">Cancel</button>
@@ -115,7 +117,12 @@ export default class CreatingForm extends SmartView {
     this._callback.inputBasePriceChange(evt);
   }
 
-  setCreatingFormSubmitHandler(callback) {
+  _buttonCancelClickHandler(evt) {
+    evt.preventDefault();
+    this._callback.buttonCancelClick(evt);
+  }
+
+  setFormSubmitHandler(callback) {
     this._callback.creatingFormSubmit = callback;
     this.getElement().querySelector('form').addEventListener('submit', this._creatingFormSubmitHandler);
   }
@@ -160,5 +167,10 @@ export default class CreatingForm extends SmartView {
   setInputBasePriceHandler(callback) {
     this._callback.inputBasePriceChange = callback;
     this.getElement().querySelector('.event__input--price').addEventListener('input', this._inputBasePriceChangeHandler);
+  }
+
+  setButtonCancelClickHandler(callback) {
+    this._callback.buttonCancelClick = callback;
+    this.getElement().querySelector('.event__reset-btn').addEventListener('click', this._buttonCancelClickHandler);
   }
 }

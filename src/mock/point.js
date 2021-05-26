@@ -102,7 +102,7 @@ const generateDate = () => {
   const maxDayGap = 6;
   const maxHoursGap = 23;
   const maxMinutesGap = 59;
-  let newPointDate = dayjs();
+  let newPointDate = dayjs().startOf('month');
   return () => {
     const minutesGap = getRandomInteger(0, maxMinutesGap);
     const hoursGap = getRandomInteger(0, maxHoursGap);

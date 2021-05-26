@@ -34,23 +34,9 @@ const capitalizeFirstLetter = (string) => {
   return string[0].toUpperCase() + string.slice(1);
 };
 
-const updateItem = (items, update) => {
-  const index = items.findIndex((item) => item.id === update.id);
-
-  if (index === -1) {
-    return items;
-  }
-
-  return [
-    ...items.slice(0, index),
-    update,
-    ...items.slice(index + 1),
-  ];
-};
-
 const getIdentifier = () => {
   let id = 0;
   return () => id++;
 };
 
-export {capitalizeFirstLetter, getRandomItem, getRandomItems, getRandomInteger, checkOfferTypes, updateItem, getIdentifier};
+export {capitalizeFirstLetter, getRandomItem, getRandomItems, getRandomInteger, checkOfferTypes, getIdentifier};

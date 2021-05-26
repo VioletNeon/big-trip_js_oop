@@ -5,12 +5,13 @@ import {getPictureTemplate} from './get-picture-template.js';
 import {getSelectedDestinationData} from '../utils/render.js';
 import {getOfferTemplate} from './get-offer-template.js';
 import {getDestinationTemplate} from './get-destination-template.js';
+import he from 'he';
 import '../../node_modules/flatpickr/dist/flatpickr.min.css';
 
 export default class EditingForm extends SmartView {
   constructor(point, destinations, offersPoint) {
     super();
-    this._point = Object.assign({}, point);
+    this._point = point;
     this._destinations = destinations;
     this._offersPoint = offersPoint;
     this._isPreviousPoint = true;
@@ -30,6 +31,7 @@ export default class EditingForm extends SmartView {
     this._rollDownButtonClickHandler = this._rollDownButtonClickHandler.bind(this);
     this._inputOfferClickHandler = this._inputOfferClickHandler.bind(this);
     this._inputBasePriceChangeHandler = this._inputBasePriceChangeHandler.bind(this);
+    this._buttonDeleteClickHandler = this._buttonDeleteClickHandler.bind(this);
   }
 
   getOfferTemplate(pointOffers) {
@@ -87,7 +89,7 @@ export default class EditingForm extends SmartView {
           <label class="event__label  event__type-output" for="event-destination-1">
             ${typeWaypoint}
           </label>
-          <input class="event__input event__input--destination" id="event-destination-1" type="text" name="event-destination" value="${name}" list="destination-list-1">
+          <input class="event__input event__input--destination" id="event-destination-1" required type="text" name="event-destination" value="${he.encode(name)}" list="destination-list-1">
           <datalist id="destination-list-1">
             ${destinationForSelect}
           </datalist>
@@ -104,10 +106,10 @@ export default class EditingForm extends SmartView {
             <span class="visually-hidden">Price</span>
             &euro;
           </label>
-          <input class="event__input  event__input--price" id="event-price-1" type="text" name="event-price" value="${basePrice}">
+          <input class="event__input  event__input--price" id="event-price-1" required type="number" name="event-price" value="${basePrice}">
         </div>
         <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
-        <button class="event__reset-btn" type="reset">Cancel</button>
+        <button class="event__reset-btn" type="reset">Delete</button>
         <button class="event__rollup-btn" type="button">
           <span class="visually-hidden">Open event</span>
         </button>
@@ -191,7 +193,7 @@ export default class EditingForm extends SmartView {
     this._callback.rollDownButtonClick();
   }
 
-  setEditingFormSubmitHandler(callback) {
+  setFormSubmitHandler(callback) {
     this._callback.editingFormSubmit = callback;
     this.getElement().querySelector('form').addEventListener('submit', this._editingFormSubmitHandler);
   }
@@ -228,4 +230,15 @@ export default class EditingForm extends SmartView {
       });
     }
   }
+
+  _buttonDeleteClickHandler(evt) {
+    evt.preventDefault();
+    this._callback.buttonDeleteClick(this._point);
+  }
+
+  setButtonDeleteClickHandler(callback) {
+    this._callback.buttonDeleteClick = callback;
+    this.getElement().querySelector('.event__reset-btn').addEventListener('click', this._buttonDeleteClickHandler);
+  }
+
 }

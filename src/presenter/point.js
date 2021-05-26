@@ -1,10 +1,11 @@
 import EditingFormView from '../view/editing-form.js';
 import WaypointView from '../view/waypoint.js';
 import {render, replace, completelyRemove} from '../utils/render.js';
-import {Mode} from '../utils/const.js';
+import {Mode, UserAction, UpdateType} from '../utils/const.js';
 
 export default class Point {
-  constructor(container, destinations, offersPoint, changeData, changeMode, removeCreatingForm) {
+  constructor(waypointsArguments) {
+    const {container, destinations, offersPoint, changeData, changeMode, removeCreatingForm} = waypointsArguments;
     this._container = container;
     this._destinations = destinations;
     this._offersPoint = offersPoint;
@@ -20,6 +21,7 @@ export default class Point {
     this._escKeyDownHandler = this._escKeyDownHandler.bind(this);
     this._editingFormSubmitHandler = this._editingFormSubmitHandler.bind(this);
     this._favoriteClickHandler = this._favoriteClickHandler.bind(this);
+    this._buttonDeleteClickHandler = this._buttonDeleteClickHandler.bind(this);
   }
 
   init(point) {
@@ -56,6 +58,8 @@ export default class Point {
 
   _favoriteClickHandler() {
     this._changeData(
+      UserAction.UPDATE_WAYPOINT,
+      UpdateType.MINOR,
       Object.assign(
         {},
         this._point,
@@ -87,9 +91,10 @@ export default class Point {
   }
 
   _rollUpButtonClickHandler() {
-    this._editingFormComponent = new EditingFormView(this._point, this._destinations, this._offersPoint);
+    this._editingFormComponent = new EditingFormView(this._point, this._destinations.getDataItems(), this._offersPoint.getDataItems());
+    this._editingFormComponent.setButtonDeleteClickHandler(this._buttonDeleteClickHandler);
     this._editingFormComponent.setRollDownButtonClickHandler(this._rollDownButtonClickHandler);
-    this._editingFormComponent.setEditingFormSubmitHandler(this._editingFormSubmitHandler);
+    this._editingFormComponent.setFormSubmitHandler(this._editingFormSubmitHandler);
     this._editingFormComponent.setInnerHandlers();
     this._replaceWaypointToEditingForm();
     document.addEventListener('keydown', this._escKeyDownHandler);
@@ -102,9 +107,21 @@ export default class Point {
     document.removeEventListener('keydown', this._escKeyDownHandler);
   }
 
-  _editingFormSubmitHandler(point) {
-    this._changeData(point);
+  _editingFormSubmitHandler(updating) {
+    this._changeData(
+      UserAction.UPDATE_WAYPOINT,
+      UpdateType.MINOR,
+      updating,
+    );
     this._replaceEditingFormToWaypoint();
     document.removeEventListener('keydown', this._escKeyDownHandler);
+  }
+
+  _buttonDeleteClickHandler(point) {
+    this._changeData(
+      UserAction.DELETE_WAYPOINT,
+      UpdateType.MINOR,
+      point,
+    );
   }
 }

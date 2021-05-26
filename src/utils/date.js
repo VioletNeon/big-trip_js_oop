@@ -1,8 +1,10 @@
 import dayjs from 'dayjs';
 import flatpickr from 'flatpickr';
 import customParseFormat from '../../node_modules/dayjs/plugin/customParseFormat.js';
+import isSameOrBefore from '../../node_modules/dayjs/plugin/isSameOrBefore.js';
 
 dayjs.extend(customParseFormat);
+dayjs.extend(isSameOrBefore);
 
 const getDuration = (dateFrom, dateTo) => {
   let minutes = dayjs(dateTo).diff(dateFrom, 'm');
@@ -23,4 +25,12 @@ const changeDateFormat = (date, dateFormat) => {
   return dayjs(date).format(dateFormat);
 };
 
-export {changeDateFormat, getDuration, dayjs, flatpickr};
+const isPointExpired = (dateFrom) => {
+  return dateFrom === null ? false : dayjs().isAfter(dateFrom, 'D');
+};
+
+const isPointExpiringSoon = (dateTo) => {
+  return dateTo === null ? false : dayjs().isSameOrBefore(dayjs(dateTo));
+};
+
+export {changeDateFormat, getDuration, dayjs, flatpickr, isPointExpired, isPointExpiringSoon};
