@@ -1,9 +1,12 @@
 import AbstractView from './abstract.js';
 import {MenuItem} from '../utils/const.js';
 
+const BUTTON_CLASS_ACTIVE = 'trip-tabs__btn--active';
+
 export default class SiteMenu extends AbstractView {
   constructor() {
     super();
+    this._tabs = null;
 
     this._menuClickHandler = this._menuClickHandler.bind(this);
   }
@@ -30,10 +33,11 @@ export default class SiteMenu extends AbstractView {
   }
 
   setMenuItem(menuItem) {
-    const tabs = this.getElement().querySelectorAll('.trip-tabs__btn');
-    const BUTTON_CLASS_ACTIVE = 'trip-tabs__btn--active';
+    if (this._tabs === null) {
+      this._tabs = this.getElement().querySelectorAll('.trip-tabs__btn');
+    }
 
-    tabs.forEach((tab) => {
+    this._tabs.forEach((tab) => {
       tab.dataset.menuItem === menuItem ? tab.classList.add(BUTTON_CLASS_ACTIVE) : tab.classList.remove(BUTTON_CLASS_ACTIVE);
     });
   }

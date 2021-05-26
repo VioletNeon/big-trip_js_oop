@@ -37,10 +37,11 @@ export default class Filter {
   }
 
   _setDisabled() {
+    const filterButtons = this._filterComponent.getElement().querySelectorAll('input');
     const points = this._pointsModel.getDataItems().slice();
-    Object.entries(filter).forEach(([type, callback]) => {
-      if (callback(points).length === 0) {
-        document.querySelector(`#filter-${type}`).disabled = true;
+    filterButtons.forEach((filterButton) => {
+      if (filter[filterButton.value](points).length === 0) {
+        filterButton.disabled = true;
       }
     });
   }

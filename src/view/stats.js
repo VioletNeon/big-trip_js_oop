@@ -214,7 +214,7 @@ const renderTimeSpendChart = (timeCtx, points, uniqTypes) => {
             display: false,
             drawBorder: false,
           },
-          minBarLength: 50,
+          minBarLength: 90,
         }],
       },
       legend: {
