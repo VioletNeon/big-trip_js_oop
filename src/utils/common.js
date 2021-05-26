@@ -39,4 +39,6 @@ const getIdentifier = () => {
   return () => id++;
 };
 
-export {capitalizeFirstLetter, getRandomItem, getRandomItems, getRandomInteger, checkOfferTypes, getIdentifier};
+const makeItemsUniq = (items) => [...new Set(items)];
+
+export {capitalizeFirstLetter, getRandomItem, getRandomItems, getRandomInteger, checkOfferTypes, getIdentifier, makeItemsUniq};

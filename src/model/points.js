@@ -30,13 +30,13 @@ export default class Points extends Observer {
     this._notify(updateType, updatedPoint);
   }
 
-  addPoint(updateType, updatedPoint) {
+  addPoint(updateType, newPoint) {
     this._points = [
-      updatedPoint,
+      newPoint,
       ...this._points,
     ];
 
-    this._notify(updateType, updatedPoint);
+    this._notify(updateType, newPoint);
   }
 
   deletePoint(updateType, deletedPoint) {

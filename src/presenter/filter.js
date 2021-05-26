@@ -1,6 +1,7 @@
 import FilterView from '../view/filter.js';
 import {render, replace, completelyRemove} from '../utils/render.js';
 import {FilterType, UpdateType} from '../utils/const.js';
+import {filter} from '../utils/filter.js';
 
 export default class Filter {
   constructor(filterContainer, filterModel, pointsModel) {
@@ -18,19 +19,30 @@ export default class Filter {
   }
 
   init() {
-    const filters = this._getTypeFilters();
+    const filters = this._getFilters();
     const prevFilterComponent = this._filterComponent;
 
     this._filterComponent = new FilterView(filters, this._filterModel.getFilter());
-    this._filterComponent.setTypeChangeHandler(this._filterTypeChangeHandler);
+    this._filterComponent.setFilterTypeChangeHandler(this._filterTypeChangeHandler);
 
     if (prevFilterComponent === null) {
       render(this._filterContainer, this._filterComponent);
+      this._setDisabled();
       return;
     }
 
     replace(this._filterComponent, prevFilterComponent);
     completelyRemove(prevFilterComponent);
+    this._setDisabled();
+  }
+
+  _setDisabled() {
+    const points = this._pointsModel.getDataItems().slice();
+    Object.entries(filter).forEach(([type, callback]) => {
+      if (callback(points).length === 0) {
+        document.querySelector(`#filter-${type}`).disabled = true;
+      }
+    });
   }
 
   _modelEventHandler() {
@@ -45,7 +57,7 @@ export default class Filter {
     this._filterModel.setFilter(UpdateType.MAJOR, filterType);
   }
 
-  _getTypeFilters() {
+  _getFilters() {
     return [
       {
         type: FilterType.EVERYTHING,

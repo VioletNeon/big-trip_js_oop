@@ -14,15 +14,15 @@ export default class Smart extends AbstractView {
     parent.replaceChild(newElement, prevElement);
   }
 
-  updateData(update, justDataUpdating) {
-    if (!update) {
+  updateData(updating, justDataUpdating) {
+    if (!updating) {
       return;
     }
 
     this._point = Object.assign(
       {},
       this._point,
-      update,
+      updating,
     );
 
     if (justDataUpdating) {
