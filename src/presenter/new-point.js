@@ -48,7 +48,7 @@ export default class NewPoint {
     this._creatingFormComponent.setInputTimeEndChangeHandler(this._inputTimeEndChangeHandler);
     this._creatingFormComponent.setCalendarFormInput();
     this._creatingFormComponent.setInputBasePriceHandler(this._inputBasePriceChangeHandler);
-    this._creatingFormComponent.setFormSubmitHandler(this._creatingFormSubmitHandler);
+    this._creatingFormComponent.setCreatingFormSubmitHandler(this._creatingFormSubmitHandler);
     this._creatingFormComponent.setButtonCancelClickHandler(this._buttonCancelClickHandler);
 
     this._buttonElement.disabled = true;
@@ -126,6 +126,7 @@ export default class NewPoint {
     if (this._creatingFormComponent === null) {
       return;
     }
+    this._creatingFormComponent.removeCalendarFormInput();
     completelyRemove(this._creatingFormComponent);
     this._creatingFormComponent = null;
     this._buttonElement.disabled = false;

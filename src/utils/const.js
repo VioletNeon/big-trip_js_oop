@@ -27,4 +27,9 @@ const FilterType = {
   PAST: 'past',
 };
 
-export {SortType, Mode, UserAction, UpdateType, FilterType};
+const MenuItem = {
+  TABLE: 'TABLE',
+  STATS: 'STATS',
+};
+
+export {SortType, Mode, UserAction, UpdateType, FilterType, MenuItem};

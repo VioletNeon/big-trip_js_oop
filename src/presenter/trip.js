@@ -3,6 +3,7 @@ import SortView from '../view/sort.js';
 import TripInfoView from '../view/trip-info.js';
 import NoWaypointView from '../view/no-waypoint.js';
 import NewPointPresenter from '../presenter/new-point.js';
+import BoardView from '../view/board.js';
 import {render, RenderPosition, completelyRemove} from '../utils/render.js';
 import PointPresenter from '../presenter/point.js';
 import {SortType, UpdateType, UserAction, FilterType} from '../utils/const.js';
@@ -19,6 +20,8 @@ export default class Trip {
     this._pointsModel = pointsModel;
     this._filterModel = filterModel;
     this._waypointListComponent = new WaypointList();
+    this._boardComponent = new BoardView();
+    this._tripInfoComponent = null;
     this._sortComponent = null;
     this._noWaypointComponent = new NoWaypointView();
     this._newPointButton = this._headerContainer.querySelector('.trip-main__event-add-btn');
@@ -32,9 +35,6 @@ export default class Trip {
     this._removeCreatingFormHandler = this._removeCreatingFormHandler.bind(this);
     this._sortTypeChangeHandler = this._sortTypeChangeHandler.bind(this);
 
-    this._pointsModel.addObserver(this._modelEventHandler);
-    this._filterModel.addObserver(this._modelEventHandler);
-
     const newPointArguments = {
       container: this._waypointListComponent,
       buttonElement: this._newPointButton,
@@ -44,12 +44,17 @@ export default class Trip {
     };
 
     this._newPoint = new NewPointPresenter(newPointArguments);
+    this._setNewPointButtonClickHandler();
   }
 
   init() {
+    render(this._mainContainer, this._boardComponent, RenderPosition.AFTERBEGIN);
     this._renderWaypointList();
-    this._setNewPointButtonClickHandler();
     this._renderTrip();
+    this._newPointButton.disabled = false;
+
+    this._pointsModel.addObserver(this._modelEventHandler);
+    this._filterModel.addObserver(this._modelEventHandler);
   }
 
   _getPoints() {
@@ -121,7 +126,7 @@ export default class Trip {
   }
 
   _renderWaypointList() {
-    render(this._mainContainer, this._waypointListComponent);
+    render(this._boardComponent, this._waypointListComponent);
   }
 
   _renderSort() {
@@ -130,13 +135,18 @@ export default class Trip {
     }
 
     this._sortComponent = new SortView(this._currentSortType);
-    this._sortComponent.setTypeChangeHandler(this._sortTypeChangeHandler);
-    render(this._mainContainer, this._sortComponent, RenderPosition.AFTERBEGIN);
+    this._sortComponent.setSortTypeChangeHandler(this._sortTypeChangeHandler);
+    render(this._boardComponent, this._sortComponent, RenderPosition.AFTERBEGIN);
   }
 
   _renderTripInfo(points) {
     if (points.length === 0) {
       return;
+    }
+
+    if (this._tripInfoComponent !== null) {
+      completelyRemove(this._tripInfoComponent);
+      this._tripInfoComponent = null;
     }
 
     this._tripInfoComponent = new TripInfoView(points);
@@ -163,7 +173,7 @@ export default class Trip {
   }
 
   _renderNoWaypoints() {
-    render(this._mainContainer, this._noWaypointComponent);
+    render(this._boardComponent, this._noWaypointComponent);
   }
 
   _removeCreatingFormHandler() {
@@ -203,5 +213,17 @@ export default class Trip {
     this._renderSort();
     this._renderAllWaypoints(points.slice());
     this._renderTripInfo(points);
+  }
+
+  destroy() {
+    this._clearTrip({resetSortType: true});
+    const points = this._getPoints();
+    this._renderTripInfo(points);
+    completelyRemove(this._waypointListComponent);
+    completelyRemove(this._boardComponent);
+    this._newPointButton.disabled = true;
+
+    this._pointsModel.removeObserver(this._modelEventHandler);
+    this._filterModel.removeObserver(this._modelEventHandler);
   }
 }

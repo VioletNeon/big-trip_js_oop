@@ -4,8 +4,8 @@ import {render, replace, completelyRemove} from '../utils/render.js';
 import {Mode, UserAction, UpdateType} from '../utils/const.js';
 
 export default class Point {
-  constructor(waypointsArguments) {
-    const {container, destinations, offersPoint, changeData, changeMode, removeCreatingForm} = waypointsArguments;
+  constructor(waypointArguments) {
+    const {container, destinations, offersPoint, changeData, changeMode, removeCreatingForm} = waypointArguments;
     this._container = container;
     this._destinations = destinations;
     this._offersPoint = offersPoint;
@@ -94,7 +94,7 @@ export default class Point {
     this._editingFormComponent = new EditingFormView(this._point, this._destinations.getDataItems(), this._offersPoint.getDataItems());
     this._editingFormComponent.setButtonDeleteClickHandler(this._buttonDeleteClickHandler);
     this._editingFormComponent.setRollDownButtonClickHandler(this._rollDownButtonClickHandler);
-    this._editingFormComponent.setFormSubmitHandler(this._editingFormSubmitHandler);
+    this._editingFormComponent.setEditingFormSubmitHandler(this._editingFormSubmitHandler);
     this._editingFormComponent.setInnerHandlers();
     this._replaceWaypointToEditingForm();
     document.addEventListener('keydown', this._escKeyDownHandler);
@@ -107,11 +107,11 @@ export default class Point {
     document.removeEventListener('keydown', this._escKeyDownHandler);
   }
 
-  _editingFormSubmitHandler(updating) {
+  _editingFormSubmitHandler(update) {
     this._changeData(
       UserAction.UPDATE_WAYPOINT,
       UpdateType.MINOR,
-      updating,
+      update,
     );
     this._replaceEditingFormToWaypoint();
     document.removeEventListener('keydown', this._escKeyDownHandler);

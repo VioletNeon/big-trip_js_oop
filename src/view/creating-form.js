@@ -9,6 +9,7 @@ export default class CreatingForm extends SmartView {
     super();
     this._offersPoint = offersPoint;
     this._destinations = destinations;
+    this._datepicker = [];
     this._creatingFormSubmitHandler = this._creatingFormSubmitHandler.bind(this);
     this._groupTypeChangeHandler = this._groupTypeChangeHandler.bind(this);
     this._inputEventDestinationChangeHandler = this._inputEventDestinationChangeHandler.bind(this);
@@ -65,7 +66,7 @@ export default class CreatingForm extends SmartView {
             <span class="visually-hidden">Price</span>
             &euro;
           </label>
-          <input class="event__input  event__input--price" required id="event-price-1" type="number" name="event-price" value="">
+          <input class="event__input  event__input--price" required id="event-price-1" type="number" min="0" name="event-price" value="">
         </div>
         <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
         <button class="event__reset-btn" type="reset">Cancel</button>
@@ -122,7 +123,7 @@ export default class CreatingForm extends SmartView {
     this._callback.buttonCancelClick(evt);
   }
 
-  setFormSubmitHandler(callback) {
+  setCreatingFormSubmitHandler(callback) {
     this._callback.creatingFormSubmit = callback;
     this.getElement().querySelector('form').addEventListener('submit', this._creatingFormSubmitHandler);
   }
@@ -138,14 +139,23 @@ export default class CreatingForm extends SmartView {
   }
 
   setCalendarFormInput() {
+    if (this._datepicker.length > 0) {
+      this._datepicker.forEach((datepicker) => datepicker.destroy());
+      this._datepicker = [];
+    }
     const eventTimeInput = this.getElement().querySelectorAll('.event__input--time');
-    if (eventTimeInput.length > 0) {
-      eventTimeInput.forEach((item) => {
-        flatpickr(item, {
-          enableTime: true,
-          dateFormat: 'y/m/d H:i',
-        });
-      });
+    eventTimeInput.forEach((item) => {
+      this._datepicker.push(flatpickr(item, {
+        enableTime: true,
+        dateFormat: 'y/m/d H:i',
+      }));
+    });
+  }
+
+  removeCalendarFormInput() {
+    if (this._datepicker.length > 0) {
+      this._datepicker.forEach((datepicker) => datepicker.destroy());
+      this._datepicker = [];
     }
   }
 

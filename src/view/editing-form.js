@@ -15,6 +15,7 @@ export default class EditingForm extends SmartView {
     this._destinations = destinations;
     this._offersPoint = offersPoint;
     this._isPreviousPoint = true;
+    this._datepicker = [];
     this._editedPoint = {
       basePrice: point.basePrice,
       dateFrom: point.dateFrom,
@@ -106,7 +107,7 @@ export default class EditingForm extends SmartView {
             <span class="visually-hidden">Price</span>
             &euro;
           </label>
-          <input class="event__input  event__input--price" id="event-price-1" required type="number" name="event-price" value="${basePrice}">
+          <input class="event__input  event__input--price" id="event-price-1" min="0" required type="number" name="event-price" value="${basePrice}">
         </div>
         <button class="event__save-btn  btn  btn--blue" type="submit">Save</button>
         <button class="event__reset-btn" type="reset">Delete</button>
@@ -135,8 +136,15 @@ export default class EditingForm extends SmartView {
     </li>`;
   }
 
+  removeElement() {
+    super.removeElement();
+
+    this._removeCalendarFormInput();
+  }
+
   _editingFormSubmitHandler(evt) {
     evt.preventDefault();
+    this._removeCalendarFormInput();
     this.updateData(this._editedPoint, true);
     this._isPreviousPoint = true;
     this._callback.editingFormSubmit(this._point);
@@ -185,15 +193,16 @@ export default class EditingForm extends SmartView {
   }
 
   _inputBasePriceChangeHandler(evt) {
-    this._editedPoint.basePrice = evt.target.value;
+    this._editedPoint.basePrice = Number(evt.target.value);
   }
 
   _rollDownButtonClickHandler() {
+    this._removeCalendarFormInput();
     this._isPreviousPoint = true;
     this._callback.rollDownButtonClick();
   }
 
-  setFormSubmitHandler(callback) {
+  setEditingFormSubmitHandler(callback) {
     this._callback.editingFormSubmit = callback;
     this.getElement().querySelector('form').addEventListener('submit', this._editingFormSubmitHandler);
   }
@@ -220,19 +229,29 @@ export default class EditingForm extends SmartView {
   }
 
   _setCalendarFormInput() {
+    if (this._datepicker.length > 0) {
+      this._datepicker.forEach((datepicker) => datepicker.destroy());
+      this._datepicker = [];
+    }
     const eventTimeInput = this.getElement().querySelectorAll('.event__input--time');
-    if (eventTimeInput.length > 0) {
-      eventTimeInput.forEach((item) => {
-        flatpickr(item, {
-          enableTime: true,
-          dateFormat: 'y/m/d H:i',
-        });
-      });
+    eventTimeInput.forEach((item) => {
+      this._datepicker.push(flatpickr(item, {
+        enableTime: true,
+        dateFormat: 'y/m/d H:i',
+      }));
+    });
+  }
+
+  _removeCalendarFormInput() {
+    if (this._datepicker.length > 0) {
+      this._datepicker.forEach((datepicker) => datepicker.destroy());
+      this._datepicker = [];
     }
   }
 
   _buttonDeleteClickHandler(evt) {
     evt.preventDefault();
+    this._removeCalendarFormInput();
     this._callback.buttonDeleteClick(this._point);
   }
 
