@@ -2,13 +2,14 @@ import SmartView from './smart.js';
 import {capitalizeFirstLetter} from '../utils/common.js';
 import {flatpickr, dayjs, changeDateFormat} from '../utils/date.js';
 import he from 'he';
+import {UpdateType} from '../utils/const';
 
 
 export default class CreatingForm extends SmartView {
-  constructor(destinations, offersPoint) {
+  constructor(destinationsModel, offersPointModel) {
     super();
-    this._offersPoint = offersPoint;
-    this._destinations = destinations;
+    this._offersPointModel = offersPointModel;
+    this._destinationsModel = destinationsModel;
     this._datepicker = [];
     this._creatingFormSubmitHandler = this._creatingFormSubmitHandler.bind(this);
     this._groupTypeChangeHandler = this._groupTypeChangeHandler.bind(this);
@@ -18,27 +19,50 @@ export default class CreatingForm extends SmartView {
     this._inputTimeEndChangeHandler = this._inputTimeEndChangeHandler.bind(this);
     this._inputBasePriceChangeHandler = this._inputBasePriceChangeHandler.bind(this);
     this._buttonCancelClickHandler = this._buttonCancelClickHandler.bind(this);
+    this._modelOffersEventHandler = this._modelOffersEventHandler.bind(this);
+    this._modelDestinationsEventHandler = this._modelDestinationsEventHandler.bind(this);
+
+    this._offersPointModel.addObserver(this._modelOffersEventHandler);
+    this._destinationsModel.addObserver(this._modelDestinationsEventHandler);
+  }
+
+  _getDestinationForSelect(destinationNames) {
+    return destinationNames.map((item) => {return `<option value="${he.encode(item)}"></option>`;}).join(' ');
+  }
+
+  _getTypesForSelect(allOffers) {
+    return allOffers.map((item) => {return `<div class="event__type-item">
+        <input id="event-type-${item}-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${item}">
+        <label class="event__type-label  event__type-label--${item}" for="event-type-${item}-1">${capitalizeFirstLetter(item)}</label>
+      </div>`;}).join(' ');
   }
 
   getTemplate() {
-    const names = this._destinations.map(({name}) => name);
-    const offerTypes = this._offersPoint.map(({type}) => type);
+    const names = this._destinationsModel.getDataItems().map(({name}) => name);
+    const allOffers = this._offersPointModel.getDataItems().map(({type}) => type);
     const defaultDate = changeDateFormat(dayjs(), 'YY/MM/DD HH:mm');
-    const offerTypesTemplate = offerTypes.map((item) => {
-      return `<div class="event__type-item">
-        <input id="event-type-${item}-1" class="event__type-input  visually-hidden" required type="radio" name="event-type" value="${item}">
-        <label class="event__type-label  event__type-label--${item}" for="event-type-${item}-1">${capitalizeFirstLetter(item)}</label>
-      </div>`;}).join(' ');
-    const nameDestinationsTemplate = names.map((item) => {return `<option value="${he.encode(item)}"></option>`;}).join(' ');
+    let offerTypesTemplate = '';
+    let nameDestinationsTemplate = '';
+
+    const isLoadingOffers = this._offersPointModel.isLoading;
+    const isLoadingDestinations = this._destinationsModel.isLoading;
+
+    if (!isLoadingOffers) {
+      offerTypesTemplate = this._getTypesForSelect(allOffers);
+    }
+    if (!isLoadingDestinations) {
+      nameDestinationsTemplate = this._getDestinationForSelect(names);
+    }
+
     return `<li class="trip-events__item">
-<form class="event event--edit" action="#" method="post">
+    <form class="event event--edit" action="#" method="post">
     <header class="event__header">
       <div class="event__type-wrapper">
           <label class="event__type  event__type-btn" for="event-type-toggle-1">
             <span class="visually-hidden">Choose event type</span>
             <img class="event__type-icon" width="17" height="17" src="img/icons/flight.png" alt="Event type icon">
           </label>
-          <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" type="checkbox" required>
+          <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" type="checkbox" ${isLoadingOffers ? 'disabled' : ''} required>
           <div class="event__type-list">
             <fieldset class="event__type-group">
               <legend class="visually-hidden">Event type</legend>
@@ -49,7 +73,7 @@ export default class CreatingForm extends SmartView {
         <div class="event__field-group  event__field-group--destination">
           <label class="event__label  event__type-output" for="event-destination-1">
           </label>
-          <input class="event__input  event__input--destination" id="event-destination-1" type="text" name="event-destination" value="" list="destination-list-1">
+          <input class="event__input  event__input--destination" id="event-destination-1" type="text" ${isLoadingDestinations ? 'disabled' : ''} name="event-destination" value="" list="destination-list-1">
           <datalist id="destination-list-1">
             ${nameDestinationsTemplate}
           </datalist>
@@ -87,6 +111,28 @@ export default class CreatingForm extends SmartView {
       </section>
     </form>
   </li>`;
+  }
+
+  _modelOffersEventHandler(updateType) {
+    if (updateType === UpdateType.INIT) {
+      const fieldContainer = this.getElement().querySelector('.event__type-group');
+      const typeOffers = this._offersPointModel.getDataItems();
+      const allOffers = typeOffers.map(({type}) => type);
+      const selectTypeInput = this.getElement().querySelector('#event-type-toggle-1');
+      selectTypeInput.disabled = false;
+      fieldContainer.innerHTML = `<legend class="visually-hidden">Event type</legend>${this._getTypesForSelect(allOffers)}`;
+    }
+  }
+
+  _modelDestinationsEventHandler(updateType) {
+    if (updateType === UpdateType.INIT) {
+      const optionsContainer = this.getElement().querySelector('#destination-list-1');
+      const destinationNames = this._destinationsModel.getDataItems().map(({name}) => name);
+      const selectDestinationInput = this.getElement().querySelector('#event-destination-1');
+      selectDestinationInput.disabled = false;
+      optionsContainer.innerHTML = '';
+      optionsContainer.innerHTML = `${this._getDestinationForSelect(destinationNames)}`;
+    }
   }
 
   _creatingFormSubmitHandler(evt) {

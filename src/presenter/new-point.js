@@ -10,10 +10,10 @@ const getNewPointId = getIdentifier();
 
 export default class NewPoint {
   constructor(newPointArguments) {
-    const {container, buttonElement, destinations, offersPoint, changeData} = newPointArguments;
+    const {container, buttonElement, destinationsModel, offersPointModel, changeData} = newPointArguments;
     this._container = container;
-    this._destinations = destinations;
-    this._offersPoint = offersPoint;
+    this._destinationsModel = destinationsModel;
+    this._offersPointModel = offersPointModel;
     this._buttonElement = buttonElement;
     this._changeData = changeData;
     this._creatingFormComponent = null;
@@ -41,7 +41,7 @@ export default class NewPoint {
   }
 
   init() {
-    this._creatingFormComponent = new CreatingFormView(this._destinations.getDataItems(), this._offersPoint.getDataItems());
+    this._creatingFormComponent = new CreatingFormView(this._destinationsModel, this._offersPointModel);
     this._creatingFormComponent.setGroupTypeChangeHandler(this._groupTypeChangeHandler);
     this._creatingFormComponent.setInputEventDestinationChangeHandler(this._inputEventDestinationChangeHandler);
     this._creatingFormComponent.setInputTimeStartChangeHandler(this._inputTimeStartChangeHandler);
@@ -60,11 +60,17 @@ export default class NewPoint {
     if (evt.key === 'Escape' || evt.key === 'Esc') {
       evt.preventDefault();
       this.removeCreatingForm();
+      this._destinationsModel.removeObserver();
+      this._offersPointModel.removeObserver();
     }
   }
 
   _groupTypeChangeHandler(evt) {
-    const offers = checkOfferTypes(evt.target.value, this._offersPoint.getDataItems());
+    if (this._offersPointModel.isLoading) {
+      return;
+    }
+
+    const offers = checkOfferTypes(evt.target.value, this._offersPointModel.getDataItems());
     getOfferTemplate(offers);
 
     const eventTypeIcon = this._creatingFormComponent.getElement().querySelector('.event__type-icon');
@@ -103,7 +109,17 @@ export default class NewPoint {
   }
 
   _inputEventDestinationChangeHandler(evt) {
-    const destination = getSelectedDestinationData(evt.target.value, this._destinations.getDataItems());
+    if (this._destinationsModel.isLoading) {
+      return;
+    }
+    const destinations = this._destinationsModel.getDataItems();
+    const isValidDestination = destinations.some(({name}) => name === evt.target.value);
+    if (!isValidDestination) {
+      evt.target.value = '';
+      return;
+    }
+
+    const destination = getSelectedDestinationData(evt.target.value, destinations);
     getDestinationTemplate(destination);
     this._createdPoint.destination = Object.assign({}, {name: evt.target.value}, destination);
   }
@@ -127,6 +143,8 @@ export default class NewPoint {
       return;
     }
     this._creatingFormComponent.removeCalendarFormInput();
+    this._offersPointModel.removeObserver();
+    this._destinationsModel.removeObserver();
     completelyRemove(this._creatingFormComponent);
     this._creatingFormComponent = null;
     this._buttonElement.disabled = false;

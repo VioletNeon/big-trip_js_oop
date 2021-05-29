@@ -1,4 +1,5 @@
 import Observer from '../utils/observer.js';
+import dayjs from 'dayjs';
 
 export default class Points extends Observer {
   constructor() {
@@ -6,8 +7,9 @@ export default class Points extends Observer {
     this._points = [];
   }
 
-  setDataItems(points) {
+  setDataItems(updateType, points) {
     this._points = [...points];
+    this._notify(updateType);
   }
 
   getDataItems() {
@@ -52,5 +54,44 @@ export default class Points extends Observer {
     ];
 
     this._notify(updateType);
+  }
+
+  static adaptToClient(dataItem) {
+    const adaptedItem = Object.assign(
+      {},
+      dataItem,
+      {
+        basePrice: dataItem.base_price,
+        dateFrom: dataItem.date_from !== null ? dayjs(new Date(dataItem.date_from)) : dayjs(dataItem.date_from),
+        dateTo: dataItem.date_to !== null ? dayjs(new Date(dataItem.date_to)) : dayjs(dataItem.date_to),
+        isFavorite: dataItem.is_favorite,
+      },
+    );
+
+    delete adaptedItem.base_price;
+    delete adaptedItem.date_from;
+    delete adaptedItem.date_to;
+    delete adaptedItem.is_favorite;
+    return adaptedItem;
+  }
+
+  static adaptToServer(dataItem) {
+    const adaptedItem = Object.assign(
+      {},
+      dataItem,
+      {
+        'base_price': dataItem.basePrice,
+        'date_from': dataItem.dateFrom.toISOString(),
+        'date_to': dataItem.dateTo.toISOString(),
+        'is_favorite': dataItem.isFavorite,
+      },
+    );
+
+    delete adaptedItem.basePrice;
+    delete adaptedItem.dateFrom;
+    delete adaptedItem.dateTo;
+    delete adaptedItem.isFavorite;
+
+    return adaptedItem;
   }
 }
