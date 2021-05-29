@@ -3,6 +3,7 @@ import WaypointView from '../view/waypoint.js';
 import {render, replace, completelyRemove} from '../utils/render.js';
 import {Mode, UserAction, UpdateType} from '../utils/const.js';
 
+
 export default class Point {
   constructor(waypointArguments) {
     const {container,
@@ -19,6 +20,7 @@ export default class Point {
     this._removeCreatingForm = removeCreatingForm;
 
     this._waypointComponent = null;
+    this._editingFormComponent = null;
     this._mode = Mode.DEFAULT;
 
     this._rollUpButtonClickHandler = this._rollUpButtonClickHandler.bind(this);
@@ -120,7 +122,6 @@ export default class Point {
       UpdateType.MINOR,
       update,
     );
-    this._replaceEditingFormToWaypoint();
     document.removeEventListener('keydown', this._escKeyDownHandler);
   }
 
@@ -130,5 +131,14 @@ export default class Point {
       UpdateType.MINOR,
       point,
     );
+  }
+
+  setViewState(state) {
+    if (this._editingFormComponent === null) {
+      return;
+    }
+    this._editingFormComponent.setFormState(state);
+    this._destinationsModel.removeObserver();
+    this._offersPointModel.removeObserver();
   }
 }

@@ -33,4 +33,10 @@ const MenuItem = {
   STATS: 'STATS',
 };
 
-export {SortType, Mode, UserAction, UpdateType, FilterType, MenuItem};
+const State = {
+  SAVING: 'SAVING',
+  DELETING: 'DELETING',
+  ABORTING: 'ABORTING',
+};
+
+export {SortType, Mode, UserAction, UpdateType, FilterType, MenuItem, State};

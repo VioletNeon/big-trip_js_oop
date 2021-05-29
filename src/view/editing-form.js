@@ -5,9 +5,9 @@ import {getPictureTemplate} from './get-picture-template.js';
 import {getSelectedDestinationData} from '../utils/render.js';
 import {getOfferTemplate} from './get-offer-template.js';
 import {getDestinationTemplate} from './get-destination-template.js';
+import {UpdateType, State} from '../utils/const';
 import he from 'he';
 import '../../node_modules/flatpickr/dist/flatpickr.min.css';
-import {UpdateType} from '../utils/const';
 
 export default class EditingForm extends SmartView {
   constructor(point, destinationsModel, offersPointModel) {
@@ -97,7 +97,7 @@ export default class EditingForm extends SmartView {
 
     if (!isLoadingDestinations) {
       this._destinationsModel.removeObserver();
-      const destinationNames = this._destinationsModel.getDataItems();
+      const destinationNames = this._destinationsModel.getDataItems().map(({name}) => name);
       destinationForSelect = this._getDestinationForSelect(destinationNames);
     }
 
@@ -341,4 +341,25 @@ export default class EditingForm extends SmartView {
     this.getElement().querySelector('.event__reset-btn').addEventListener('click', this._buttonDeleteClickHandler);
   }
 
+  setFormState(state) {
+    const creatingFormSaveButton = this.getElement().querySelector('.event__save-btn');
+    const creatingFormDeleteButton = this.getElement().querySelector('.event__reset-btn');
+    const creatingFormInputs = this.getElement().querySelectorAll('input');
+
+    switch (state) {
+      case State.SAVING:
+        creatingFormSaveButton.disabled = true;
+        creatingFormSaveButton.textContent = 'Saving...';
+        creatingFormInputs.forEach((element) => element.disabled = true);
+        break;
+      case State.DELETING:
+        creatingFormDeleteButton.disabled = true;
+        creatingFormDeleteButton.textContent = 'Deleting...';
+        creatingFormInputs.forEach((element) => element.disabled = true);
+        break;
+      case State.ABORTING:
+        this.shake();
+        break;
+    }
+  }
 }

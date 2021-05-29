@@ -2,7 +2,7 @@ import SmartView from './smart.js';
 import {capitalizeFirstLetter} from '../utils/common.js';
 import {flatpickr, dayjs, changeDateFormat} from '../utils/date.js';
 import he from 'he';
-import {UpdateType} from '../utils/const';
+import {UpdateType, State} from '../utils/const';
 
 
 export default class CreatingForm extends SmartView {
@@ -228,5 +228,21 @@ export default class CreatingForm extends SmartView {
   setButtonCancelClickHandler(callback) {
     this._callback.buttonCancelClick = callback;
     this.getElement().querySelector('.event__reset-btn').addEventListener('click', this._buttonCancelClickHandler);
+  }
+
+  setFormState(state) {
+    const creatingFormSaveButton = this.getElement().querySelector('.event__save-btn');
+    const creatingFormInputs = this.getElement().querySelectorAll('input');
+
+    switch (state) {
+      case State.SAVING:
+        creatingFormSaveButton.disabled = true;
+        creatingFormSaveButton.textContent = 'Saving...';
+        creatingFormInputs.forEach((element) => element.disabled = true);
+        break;
+      case State.ABORTING:
+        this.shake();
+        break;
+    }
   }
 }
