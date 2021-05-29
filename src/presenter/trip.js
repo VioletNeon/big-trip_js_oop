@@ -4,6 +4,7 @@ import TripInfoView from '../view/trip-info.js';
 import NoWaypointView from '../view/no-waypoint.js';
 import NewPointPresenter from '../presenter/new-point.js';
 import BoardView from '../view/board.js';
+import LoadingView from '../view/loading.js';
 import {render, RenderPosition, completelyRemove} from '../utils/render.js';
 import PointPresenter from '../presenter/point.js';
 import {SortType, UpdateType, UserAction, FilterType} from '../utils/const.js';
@@ -12,18 +13,27 @@ import {sortWaypointTime, sortWaypointPrice, sortWaypointDay} from '../utils/sor
 
 export default class Trip {
   constructor(tripPresenterArguments) {
-    const {headerContainer, mainContainer, destinationsModel, offersModel, pointsModel, filterModel} = tripPresenterArguments;
+    const {headerContainer,
+      mainContainer,
+      destinationsModel,
+      offersModel,
+      pointsModel,
+      filterModel,
+      api} = tripPresenterArguments;
     this._headerContainer = headerContainer;
     this._mainContainer = mainContainer;
     this._destinationsModel = destinationsModel;
     this._offersModel = offersModel;
     this._pointsModel = pointsModel;
     this._filterModel = filterModel;
+    this._api = api;
+    this._isLoading = true;
     this._waypointListComponent = new WaypointList();
     this._boardComponent = new BoardView();
     this._tripInfoComponent = null;
     this._sortComponent = null;
     this._noWaypointComponent = new NoWaypointView();
+    this._loadingComponent = new LoadingView();
     this._newPointButton = this._headerContainer.querySelector('.trip-main__event-add-btn');
     this._pointPresenter = {};
     this._currentSortType = SortType.DAY;
@@ -38,8 +48,8 @@ export default class Trip {
     const newPointArguments = {
       container: this._waypointListComponent,
       buttonElement: this._newPointButton,
-      destinations: this._destinationsModel,
-      offersPoint: this._offersModel,
+      destinationsModel: this._destinationsModel,
+      offersPointModel: this._offersModel,
       changeData: this._viewActionHandler,
     };
 
@@ -87,6 +97,7 @@ export default class Trip {
     this._pointPresenter = {};
 
     completelyRemove(this._sortComponent);
+    completelyRemove(this._loadingComponent);
     completelyRemove(this._noWaypointComponent);
     completelyRemove(this._tripInfoComponent);
 
@@ -99,6 +110,9 @@ export default class Trip {
     switch (actionType) {
       case UserAction.UPDATE_WAYPOINT:
         this._pointsModel.updatePoint(updateType, updating);
+        this._api.updatePoint(updating).then((response) => {
+          this._pointsModel.updatePoint(updateType, response);
+        });
         break;
       case UserAction.ADD_WAYPOINT:
         this._pointsModel.addPoint(updateType, updating);
@@ -122,11 +136,20 @@ export default class Trip {
         this._clearTrip({resetSortType: true});
         this._renderTrip();
         break;
+      case UpdateType.INIT:
+        this._isLoading = false;
+        completelyRemove(this._loadingComponent);
+        this._renderTrip();
+        break;
     }
   }
 
   _renderWaypointList() {
     render(this._boardComponent, this._waypointListComponent);
+  }
+
+  _renderLoading() {
+    render(this._boardComponent, this._loadingComponent);
   }
 
   _renderSort() {
@@ -157,8 +180,8 @@ export default class Trip {
   _renderWaypoint(point) {
     const waypointsArguments = {
       container: this._waypointListComponent,
-      destinations: this._destinationsModel,
-      offersPoint: this._offersModel,
+      destinationsModel: this._destinationsModel,
+      offersPointModel: this._offersModel,
       changeData: this._viewActionHandler,
       changeMode: this._modeChangeHandler,
       removeCreatingForm: this._removeCreatingFormHandler,
@@ -203,6 +226,11 @@ export default class Trip {
   }
 
   _renderTrip() {
+    if (this._isLoading) {
+      this._renderLoading();
+      return;
+    }
+
     const points = this._getPoints();
 
     if (points.length === 0) {

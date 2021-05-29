@@ -5,10 +5,15 @@ import {Mode, UserAction, UpdateType} from '../utils/const.js';
 
 export default class Point {
   constructor(waypointArguments) {
-    const {container, destinations, offersPoint, changeData, changeMode, removeCreatingForm} = waypointArguments;
+    const {container,
+      destinationsModel,
+      offersPointModel,
+      changeData,
+      changeMode,
+      removeCreatingForm} = waypointArguments;
     this._container = container;
-    this._destinations = destinations;
-    this._offersPoint = offersPoint;
+    this._destinationsModel = destinationsModel;
+    this._offersPointModel = offersPointModel;
     this._changeData = changeData;
     this._changeMode = changeMode;
     this._removeCreatingForm = removeCreatingForm;
@@ -79,6 +84,8 @@ export default class Point {
   _replaceEditingFormToWaypoint() {
     replace(this._waypointComponent, this._editingFormComponent);
     this._mode = Mode.DEFAULT;
+    this._destinationsModel.removeObserver();
+    this._offersPointModel.removeObserver();
   }
 
   _escKeyDownHandler(evt) {
@@ -91,7 +98,7 @@ export default class Point {
   }
 
   _rollUpButtonClickHandler() {
-    this._editingFormComponent = new EditingFormView(this._point, this._destinations.getDataItems(), this._offersPoint.getDataItems());
+    this._editingFormComponent = new EditingFormView(this._point, this._destinationsModel, this._offersPointModel);
     this._editingFormComponent.setButtonDeleteClickHandler(this._buttonDeleteClickHandler);
     this._editingFormComponent.setRollDownButtonClickHandler(this._rollDownButtonClickHandler);
     this._editingFormComponent.setEditingFormSubmitHandler(this._editingFormSubmitHandler);

@@ -7,13 +7,14 @@ import {getOfferTemplate} from './get-offer-template.js';
 import {getDestinationTemplate} from './get-destination-template.js';
 import he from 'he';
 import '../../node_modules/flatpickr/dist/flatpickr.min.css';
+import {UpdateType} from '../utils/const';
 
 export default class EditingForm extends SmartView {
-  constructor(point, destinations, offersPoint) {
+  constructor(point, destinationsModel, offersPointModel) {
     super();
     this._point = point;
-    this._destinations = destinations;
-    this._offersPoint = offersPoint;
+    this._destinationsModel = destinationsModel;
+    this._offersPointModel = offersPointModel;
     this._isPreviousPoint = true;
     this._datepicker = [];
     this._editedPoint = {
@@ -33,9 +34,14 @@ export default class EditingForm extends SmartView {
     this._inputOfferClickHandler = this._inputOfferClickHandler.bind(this);
     this._inputBasePriceChangeHandler = this._inputBasePriceChangeHandler.bind(this);
     this._buttonDeleteClickHandler = this._buttonDeleteClickHandler.bind(this);
+    this._modelOffersEventHandler = this._modelOffersEventHandler.bind(this);
+    this._modelDestinationsEventHandler = this._modelDestinationsEventHandler.bind(this);
+
+    this._offersPointModel.addObserver(this._modelOffersEventHandler);
+    this._destinationsModel.addObserver(this._modelDestinationsEventHandler);
   }
 
-  getOfferTemplate(pointOffers) {
+  _getOfferTemplate(pointOffers) {
     if (pointOffers) {
       const templates = pointOffers.map(({title, price}) => {
         const isSelectedOffer = this._point.offers.map((item) => item.title).includes(title);
@@ -54,22 +60,47 @@ export default class EditingForm extends SmartView {
     return '';
   }
 
-  getTemplate() {
-    const {type, dateFrom, dateTo, basePrice, destination} = this._point;
-    const offers = checkOfferTypes(type, this._offersPoint);
-    const {name, description, pictures} = destination;
-    const destinationNames = this._destinations.map(({name}) => name);
-    const allOffers = this._offersPoint.map(({type}) => type);
-    const typeWaypoint = capitalizeFirstLetter(type);
-    const eventDateAttributeValueFrom = changeDateFormat(dateFrom, 'YY/MM/DD HH:mm');
-    const eventDateAttributeValueTo = changeDateFormat(dateTo, 'YY/MM/DD HH:mm');
-    const typesForSelect = allOffers.map((item) => {return `<div class="event__type-item">
+  _getDestinationForSelect(destinationNames) {
+    return destinationNames.map((item) => {return `<option value="${item}"></option>`;}).join(' ');
+  }
+
+  _getTypesForSelect(allOffers) {
+    return allOffers.map((item) => {return `<div class="event__type-item">
         <input id="event-type-${item}-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${item}">
         <label class="event__type-label  event__type-label--${item}" for="event-type-${item}-1">${capitalizeFirstLetter(item)}</label>
       </div>`;}).join(' ');
-    const destinationForSelect = destinationNames.map((item) => {return `<option value="${item}"></option>`;}).join(' ');
-    const offersForSelect = this.getOfferTemplate(offers);
+  }
+
+  getTemplate() {
+    const {type, dateFrom, dateTo, basePrice, destination, offers} = this._point;
+    const {name, description, pictures} = destination;
+    const typeWaypoint = capitalizeFirstLetter(type);
+    const eventDateAttributeValueFrom = changeDateFormat(dateFrom, 'YY/MM/DD HH:mm');
+    const eventDateAttributeValueTo = changeDateFormat(dateTo, 'YY/MM/DD HH:mm');
     const pointPictures = getPictureTemplate(pictures);
+
+    let typeOffers = offers;
+    let typesForSelect = '';
+    let destinationForSelect = '';
+    const isLoadingOffers = this._offersPointModel.isLoading;
+    const isLoadingDestinations = this._destinationsModel.isLoading;
+    let offersForSelect = this._getOfferTemplate(typeOffers);
+
+    if (!isLoadingOffers) {
+      this._offersPointModel.removeObserver();
+      typeOffers = this._offersPointModel.getDataItems();
+      const allOffers = typeOffers.map(({type}) => type);
+      typesForSelect = this._getTypesForSelect(allOffers);
+      const checkedOffers = checkOfferTypes(type, typeOffers);
+      offersForSelect = this._getOfferTemplate(checkedOffers);
+    }
+
+    if (!isLoadingDestinations) {
+      this._destinationsModel.removeObserver();
+      const destinationNames = this._destinationsModel.getDataItems();
+      destinationForSelect = this._getDestinationForSelect(destinationNames);
+    }
+
     return `<li class="trip-events__item">
     <form class="event event--edit" action="#" method="post">
       <header class="event__header">
@@ -78,7 +109,7 @@ export default class EditingForm extends SmartView {
             <span class="visually-hidden">Choose event type</span>
             <img class="event__type-icon" width="17" height="17" src="img/icons/${type}.png" alt="Event type icon">
           </label>
-          <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" type="checkbox">
+          <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" type="checkbox" ${isLoadingOffers ? 'disabled' : ''}>
           <div class="event__type-list">
             <fieldset class="event__type-group">
               <legend class="visually-hidden">Event type</legend>
@@ -90,7 +121,7 @@ export default class EditingForm extends SmartView {
           <label class="event__label  event__type-output" for="event-destination-1">
             ${typeWaypoint}
           </label>
-          <input class="event__input event__input--destination" id="event-destination-1" required type="text" name="event-destination" value="${he.encode(name)}" list="destination-list-1">
+          <input class="event__input event__input--destination" id="event-destination-1" required type="text" ${isLoadingDestinations ? 'disabled' : ''} name="event-destination" value="${he.encode(name)}" list="destination-list-1">
           <datalist id="destination-list-1">
             ${destinationForSelect}
           </datalist>
@@ -150,9 +181,48 @@ export default class EditingForm extends SmartView {
     this._callback.editingFormSubmit(this._point);
   }
 
+  _removeModelEventsHandler() {
+    this._offersPointModel.removeObserver();
+    this._destinationsModel.removeObserver();
+  }
+
+  _modelOffersEventHandler(updateType) {
+    if (updateType === UpdateType.INIT) {
+      const fieldContainer = this.getElement().querySelector('.event__type-group');
+      const typeOffers = this._offersPointModel.getDataItems();
+      const allOffers = typeOffers.map(({type}) => type);
+      const selectTypeInput = this.getElement().querySelector('#event-type-toggle-1');
+      selectTypeInput.disabled = false;
+      fieldContainer.innerHTML = `<legend class="visually-hidden">Event type</legend>${this._getTypesForSelect(allOffers)}`;
+
+      const typePoint = this._point.type;
+      const pointOffers = this._point.offers;
+
+      const offers = checkOfferTypes(typePoint, typeOffers);
+      getOfferTemplate(offers, this._offersPointModel.isLoading, pointOffers);
+      this._setInputOfferClickHandler();
+    }
+  }
+
+  _modelDestinationsEventHandler(updateType) {
+    if (updateType === UpdateType.INIT) {
+      const optionsContainer = this.getElement().querySelector('#destination-list-1');
+      const destinationNames = this._destinationsModel.getDataItems().map(({name}) => name);
+
+      const selectDestinationInput = this.getElement().querySelector('#event-destination-1');
+      selectDestinationInput.disabled = false;
+      optionsContainer.innerHTML = '';
+      optionsContainer.innerHTML = `${this._getDestinationForSelect(destinationNames)}`;
+    }
+  }
+
   _groupTypeChangeHandler(evt) {
+    if (this._offersPointModel.isLoading) {
+      return;
+    }
+
     this._isPreviousPoint = false;
-    const offers = checkOfferTypes(evt.target.value, this._offersPoint);
+    const offers = checkOfferTypes(evt.target.value, this._offersPointModel.getDataItems());
     getOfferTemplate(offers);
 
     const eventTypeIcon = this.getElement().querySelector('.event__type-icon');
@@ -179,7 +249,17 @@ export default class EditingForm extends SmartView {
   }
 
   _inputEventDestinationChangeHandler(evt) {
-    const destination = getSelectedDestinationData(evt.target.value, this._destinations);
+    if (this._destinationsModel.isLoading) {
+      return;
+    }
+
+    const destinations = this._destinationsModel.getDataItems();
+    const isValidDestination = destinations.some(({name}) => name === evt.target.value);
+    if (!isValidDestination) {
+      evt.target.value = '';
+      return;
+    }
+    const destination = getSelectedDestinationData(evt.target.value, destinations);
     getDestinationTemplate(destination);
     this._editedPoint.destination = Object.assign({}, {name: evt.target.value}, destination);
   }
@@ -251,6 +331,7 @@ export default class EditingForm extends SmartView {
 
   _buttonDeleteClickHandler(evt) {
     evt.preventDefault();
+    this._removeModelEventsHandler();
     this._removeCalendarFormInput();
     this._callback.buttonDeleteClick(this._point);
   }
