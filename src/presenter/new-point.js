@@ -1,12 +1,10 @@
 import CreatingFormView from '../view/creating-form.js';
-import {checkOfferTypes, getIdentifier} from '../utils/common.js';
+import {checkOfferTypes} from '../utils/common.js';
 import {getSelectedDestinationData, render, RenderPosition, completelyRemove} from '../utils/render.js';
 import {getOfferTemplate} from '../view/get-offer-template.js';
 import {getDestinationTemplate} from '../view/get-destination-template.js';
 import {UserAction, UpdateType} from '../utils/const.js';
 import {dayjs} from '../utils/date.js';
-
-const getNewPointId = getIdentifier();
 
 export default class NewPoint {
   constructor(newPointArguments) {
@@ -25,7 +23,6 @@ export default class NewPoint {
       destination: null,
       isFavorite: false,
       offers: [],
-      id: '0' + getNewPointId(),
     };
     this._defaultPoint = Object.assign({}, this._createdPoint);
 
@@ -135,7 +132,6 @@ export default class NewPoint {
       UpdateType.MINOR,
       this._createdPoint,
     );
-    this.removeCreatingForm();
   }
 
   removeCreatingForm() {
@@ -154,5 +150,11 @@ export default class NewPoint {
 
   _buttonCancelClickHandler() {
     this.removeCreatingForm();
+  }
+
+  setViewState(state) {
+    this._creatingFormComponent.setFormState(state);
+    this._destinationsModel.removeObserver();
+    this._offersPointModel.removeObserver();
   }
 }

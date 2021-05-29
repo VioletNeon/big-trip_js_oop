@@ -83,18 +83,14 @@ api.getPoints()
   });
 
 api.getOffers().then((offers) => {
-  setTimeout(() => {
-    offersModel.setDataItems(UpdateType.INIT, offers);
-  }, 4000);
+  offersModel.setDataItems(UpdateType.INIT, offers);
 })
   .catch(() => {
     offersModel.setDataItems(UpdateType.INIT, []);
   });
 
 api.getDestinations().then((destinations) => {
-  setTimeout(() => {
-    destinationsModel.setDataItems(UpdateType.INIT, destinations);
-  }, 4000);
+  destinationsModel.setDataItems(UpdateType.INIT, destinations);
 })
   .catch(() => {
     destinationsModel.setDataItems(UpdateType.INIT, []);

@@ -7,7 +7,7 @@ import BoardView from '../view/board.js';
 import LoadingView from '../view/loading.js';
 import {render, RenderPosition, completelyRemove} from '../utils/render.js';
 import PointPresenter from '../presenter/point.js';
-import {SortType, UpdateType, UserAction, FilterType} from '../utils/const.js';
+import {SortType, UpdateType, UserAction, FilterType, State} from '../utils/const.js';
 import {filter} from '../utils/filter.js';
 import {sortWaypointTime, sortWaypointPrice, sortWaypointDay} from '../utils/sorting.js';
 
@@ -53,7 +53,7 @@ export default class Trip {
       changeData: this._viewActionHandler,
     };
 
-    this._newPoint = new NewPointPresenter(newPointArguments);
+    this._newPointPresenter = new NewPointPresenter(newPointArguments);
     this._setNewPointButtonClickHandler();
   }
 
@@ -83,14 +83,14 @@ export default class Trip {
   }
 
   _modeChangeHandler() {
-    this._newPoint.removeCreatingForm();
+    this._newPointPresenter.removeCreatingForm();
     Object
       .values(this._pointPresenter)
       .forEach((waypointPresenter) => waypointPresenter.resetView());
   }
 
   _clearTrip({resetSortType = false} = {}) {
-    this._newPoint.removeCreatingForm();
+    this._newPointPresenter.removeCreatingForm();
     Object
       .values(this._pointPresenter)
       .forEach((presenter) => presenter.destroy());
@@ -109,16 +109,28 @@ export default class Trip {
   _viewActionHandler(actionType, updateType, updating) {
     switch (actionType) {
       case UserAction.UPDATE_WAYPOINT:
-        this._pointsModel.updatePoint(updateType, updating);
+        this._pointPresenter[updating.id].setViewState(State.SAVING);
         this._api.updatePoint(updating).then((response) => {
           this._pointsModel.updatePoint(updateType, response);
+        }).catch(() => {
+          this._pointPresenter[updating.id].setViewState(State.ABORTING);
         });
         break;
       case UserAction.ADD_WAYPOINT:
-        this._pointsModel.addPoint(updateType, updating);
+        this._newPointPresenter.setViewState(State.SAVING);
+        this._api.addPoint(updating).then((response) => {
+          this._pointsModel.addPoint(updateType, response);
+        }).catch(() => {
+          this._newPointPresenter.setViewState(State.ABORTING);
+        });
         break;
       case UserAction.DELETE_WAYPOINT:
-        this._pointsModel.deletePoint(updateType, updating);
+        this._pointPresenter[updating.id].setViewState(State.DELETING);
+        this._api.deletePoint(updating).then(() => {
+          this._pointsModel.deletePoint(updateType, updating);
+        }).catch(() => {
+          this._pointPresenter[updating.id].setViewState(State.ABORTING);
+        });
         break;
     }
   }
@@ -200,14 +212,14 @@ export default class Trip {
   }
 
   _removeCreatingFormHandler() {
-    this._newPoint.removeCreatingForm();
+    this._newPointPresenter.removeCreatingForm();
   }
 
   _newPointButtonClickHandler(evt) {
     evt.preventDefault();
     this._currentSortType = SortType.DAY;
     this._filterModel.setFilter(UpdateType.MAJOR, FilterType.EVERYTHING);
-    this._newPoint.init();
+    this._newPointPresenter.init();
     completelyRemove(this._noWaypointComponent);
   }
 
