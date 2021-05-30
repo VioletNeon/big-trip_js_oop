@@ -12,7 +12,7 @@ import {MenuItem, UpdateType} from './utils/const.js';
 import Store from './api/store.js';
 import Provider from './api/provider.js';
 
-const AUTHORIZATION = 'Basic jdHk3ll7GFjXs98uvj';
+const AUTHORIZATION = 'Basic jdHk3ll7GFjXs98hjt';
 const END_POINT = 'https://14.ecmascript.pages.academy/big-trip';
 const STORE_PREFIX = 'taskmanager-localstorage';
 const STORE_VER = 'v14';
@@ -103,7 +103,6 @@ api.getDestinations().then((destinations) => {
   .catch(() => {
     destinationsModel.setDataItems(UpdateType.INIT, []);
   });
-
 
 window.addEventListener('load', () => {
   navigator.serviceWorker.register('/sw.js');
