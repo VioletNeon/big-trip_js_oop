@@ -26,17 +26,6 @@ export default class CreatingForm extends SmartView {
     this._destinationsModel.addObserver(this._modelDestinationsEventHandler);
   }
 
-  _getDestinationForSelect(destinationNames) {
-    return destinationNames.map((item) => {return `<option value="${he.encode(item)}"></option>`;}).join(' ');
-  }
-
-  _getTypesForSelect(allOffers) {
-    return allOffers.map((item) => {return `<div class="event__type-item">
-        <input id="event-type-${item}-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${item}">
-        <label class="event__type-label  event__type-label--${item}" for="event-type-${item}-1">${capitalizeFirstLetter(item)}</label>
-      </div>`;}).join(' ');
-  }
-
   getTemplate() {
     const names = this._destinationsModel.getDataItems().map(({name}) => name);
     const allOffers = this._offersPointModel.getDataItems().map(({type}) => type);
@@ -113,6 +102,94 @@ export default class CreatingForm extends SmartView {
   </li>`;
   }
 
+  removeCalendarFormInput() {
+    if (this._datepicker.length > 0) {
+      this._datepicker.forEach((datepicker) => datepicker.destroy());
+      this._datepicker = [];
+    }
+  }
+
+  setFormState(state) {
+    const creatingFormSaveButton = this.getElement().querySelector('.event__save-btn');
+    const creatingFormInputs = this.getElement().querySelectorAll('input');
+
+    switch (state) {
+      case State.SAVING:
+        creatingFormSaveButton.disabled = true;
+        creatingFormSaveButton.textContent = 'Saving...';
+        creatingFormInputs.forEach((element) => element.disabled = true);
+        break;
+      case State.ABORTING:
+        this.shake();
+        break;
+    }
+  }
+
+  setCreatingFormSubmitHandler(callback) {
+    this._callback.creatingFormSubmit = callback;
+    this.getElement().querySelector('form').addEventListener('submit', this._creatingFormSubmitHandler);
+  }
+
+  setGroupTypeChangeHandler(callback) {
+    this._callback.groupTypeChange = callback;
+    this.getElement().querySelector('.event__type-group').addEventListener('change', this._groupTypeChangeHandler);
+  }
+
+  setInputEventDestinationChangeHandler(callback) {
+    this._callback.inputEventDestinationChange = callback;
+    this.getElement().querySelector('.event__input--destination').addEventListener('change', this._inputEventDestinationChangeHandler);
+  }
+
+  setCalendarFormInput() {
+    if (this._datepicker.length > 0) {
+      this._datepicker.forEach((datepicker) => datepicker.destroy());
+      this._datepicker = [];
+    }
+    const eventTimeInput = this.getElement().querySelectorAll('.event__input--time');
+    eventTimeInput.forEach((item) => {
+      this._datepicker.push(flatpickr(item, {
+        enableTime: true,
+        dateFormat: 'y/m/d H:i',
+      }));
+    });
+  }
+
+  setInputOfferClickHandler(callback) {
+    this._callback.inputOfferClick = callback;
+    this.getElement().querySelector('.event__details').addEventListener('change', this._inputOfferClickHandler);
+  }
+
+  setInputTimeStartChangeHandler(callback) {
+    this._callback.inputTimeStartChange = callback;
+    this.getElement().querySelector('#event-start-time-1').addEventListener('input', this._inputTimeStartChangeHandler);
+  }
+
+  setInputTimeEndChangeHandler(callback) {
+    this._callback.inputTimeEndChange = callback;
+    this.getElement().querySelector('#event-end-time-1').addEventListener('input', this._inputTimeEndChangeHandler);
+  }
+
+  setInputBasePriceHandler(callback) {
+    this._callback.inputBasePriceChange = callback;
+    this.getElement().querySelector('.event__input--price').addEventListener('input', this._inputBasePriceChangeHandler);
+  }
+
+  setButtonCancelClickHandler(callback) {
+    this._callback.buttonCancelClick = callback;
+    this.getElement().querySelector('.event__reset-btn').addEventListener('click', this._buttonCancelClickHandler);
+  }
+
+  _getDestinationForSelect(destinationNames) {
+    return destinationNames.map((item) => {return `<option value="${he.encode(item)}"></option>`;}).join(' ');
+  }
+
+  _getTypesForSelect(allOffers) {
+    return allOffers.map((item) => {return `<div class="event__type-item">
+        <input id="event-type-${item}-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${item}">
+        <label class="event__type-label  event__type-label--${item}" for="event-type-${item}-1">${capitalizeFirstLetter(item)}</label>
+      </div>`;}).join(' ');
+  }
+
   _modelOffersEventHandler(updateType) {
     if (updateType === UpdateType.INIT) {
       const fieldContainer = this.getElement().querySelector('.event__type-group');
@@ -167,82 +244,5 @@ export default class CreatingForm extends SmartView {
   _buttonCancelClickHandler(evt) {
     evt.preventDefault();
     this._callback.buttonCancelClick(evt);
-  }
-
-  setCreatingFormSubmitHandler(callback) {
-    this._callback.creatingFormSubmit = callback;
-    this.getElement().querySelector('form').addEventListener('submit', this._creatingFormSubmitHandler);
-  }
-
-  setGroupTypeChangeHandler(callback) {
-    this._callback.groupTypeChange = callback;
-    this.getElement().querySelector('.event__type-group').addEventListener('change', this._groupTypeChangeHandler);
-  }
-
-  setInputEventDestinationChangeHandler(callback) {
-    this._callback.inputEventDestinationChange = callback;
-    this.getElement().querySelector('.event__input--destination').addEventListener('change', this._inputEventDestinationChangeHandler);
-  }
-
-  setCalendarFormInput() {
-    if (this._datepicker.length > 0) {
-      this._datepicker.forEach((datepicker) => datepicker.destroy());
-      this._datepicker = [];
-    }
-    const eventTimeInput = this.getElement().querySelectorAll('.event__input--time');
-    eventTimeInput.forEach((item) => {
-      this._datepicker.push(flatpickr(item, {
-        enableTime: true,
-        dateFormat: 'y/m/d H:i',
-      }));
-    });
-  }
-
-  removeCalendarFormInput() {
-    if (this._datepicker.length > 0) {
-      this._datepicker.forEach((datepicker) => datepicker.destroy());
-      this._datepicker = [];
-    }
-  }
-
-  setInputOfferClickHandler(callback) {
-    this._callback.inputOfferClick = callback;
-    this.getElement().querySelector('.event__details').addEventListener('change', this._inputOfferClickHandler);
-  }
-
-  setInputTimeStartChangeHandler(callback) {
-    this._callback.inputTimeStartChange = callback;
-    this.getElement().querySelector('#event-start-time-1').addEventListener('input', this._inputTimeStartChangeHandler);
-  }
-
-  setInputTimeEndChangeHandler(callback) {
-    this._callback.inputTimeEndChange = callback;
-    this.getElement().querySelector('#event-end-time-1').addEventListener('input', this._inputTimeEndChangeHandler);
-  }
-
-  setInputBasePriceHandler(callback) {
-    this._callback.inputBasePriceChange = callback;
-    this.getElement().querySelector('.event__input--price').addEventListener('input', this._inputBasePriceChangeHandler);
-  }
-
-  setButtonCancelClickHandler(callback) {
-    this._callback.buttonCancelClick = callback;
-    this.getElement().querySelector('.event__reset-btn').addEventListener('click', this._buttonCancelClickHandler);
-  }
-
-  setFormState(state) {
-    const creatingFormSaveButton = this.getElement().querySelector('.event__save-btn');
-    const creatingFormInputs = this.getElement().querySelectorAll('input');
-
-    switch (state) {
-      case State.SAVING:
-        creatingFormSaveButton.disabled = true;
-        creatingFormSaveButton.textContent = 'Saving...';
-        creatingFormInputs.forEach((element) => element.disabled = true);
-        break;
-      case State.ABORTING:
-        this.shake();
-        break;
-    }
   }
 }

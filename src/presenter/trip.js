@@ -69,6 +69,18 @@ export default class Trip {
     this._filterModel.addObserver(this._modelEventHandler);
   }
 
+  destroy() {
+    this._clearTrip({resetSortType: true});
+    const points = this._getPoints();
+    this._renderTripInfo(points);
+    completelyRemove(this._waypointListComponent);
+    completelyRemove(this._boardComponent);
+    this._newPointButton.disabled = true;
+
+    this._pointsModel.removeObserver(this._modelEventHandler);
+    this._filterModel.removeObserver(this._modelEventHandler);
+  }
+
   _getPoints() {
     const filterType = this._filterModel.getFilter();
     const points = this._pointsModel.getDataItems();
@@ -82,13 +94,6 @@ export default class Trip {
       case SortType.PRICE:
         return filteredPoints.slice().sort(sortWaypointPrice);
     }
-  }
-
-  _modeChangeHandler() {
-    this._newPointPresenter.removeCreatingForm();
-    Object
-      .values(this._pointPresenter)
-      .forEach((waypointPresenter) => waypointPresenter.resetView());
   }
 
   _clearTrip({resetSortType = false} = {}) {
@@ -105,56 +110,6 @@ export default class Trip {
 
     if (resetSortType) {
       this._currentSortType = SortType.DAY;
-    }
-  }
-
-  _viewActionHandler(actionType, updateType, updating) {
-    switch (actionType) {
-      case UserAction.UPDATE_WAYPOINT:
-        this._pointPresenter[updating.id].setViewState(State.SAVING);
-        this._api.updatePoint(updating).then((response) => {
-          this._pointsModel.updatePoint(updateType, response);
-        }).catch(() => {
-          this._pointPresenter[updating.id].setViewState(State.ABORTING);
-        });
-        break;
-      case UserAction.ADD_WAYPOINT:
-        this._newPointPresenter.setViewState(State.SAVING);
-        this._api.addPoint(updating).then((response) => {
-          this._pointsModel.addPoint(updateType, response);
-        }).catch(() => {
-          this._newPointPresenter.setViewState(State.ABORTING);
-        });
-        break;
-      case UserAction.DELETE_WAYPOINT:
-        this._pointPresenter[updating.id].setViewState(State.DELETING);
-        this._api.deletePoint(updating).then(() => {
-          this._pointsModel.deletePoint(updateType, updating);
-        }).catch(() => {
-          this._pointPresenter[updating.id].setViewState(State.ABORTING);
-        });
-        break;
-    }
-  }
-
-  _modelEventHandler(updateType, data) {
-    switch (updateType) {
-      case UpdateType.PATCH:
-        this._pointPresenter[data.id].init(data);
-        break;
-      case UpdateType.MINOR:
-        this._clearTrip();
-        this._renderTrip();
-        break;
-      case UpdateType.MAJOR:
-        this._clearTrip({resetSortType: true});
-        this._renderTrip();
-        break;
-      case UpdateType.INIT:
-        this._isLoading = false;
-        completelyRemove(this._loadingComponent);
-        this._renderTrip();
-        break;
     }
   }
 
@@ -213,36 +168,6 @@ export default class Trip {
     render(this._boardComponent, this._noWaypointComponent);
   }
 
-  _removeCreatingFormHandler() {
-    this._newPointPresenter.removeCreatingForm();
-  }
-
-  _newPointButtonClickHandler(evt) {
-    if (!isOnline()) {
-      toast('You can\'t create point offline');
-      return;
-    }
-    evt.preventDefault();
-    this._currentSortType = SortType.DAY;
-    this._filterModel.setFilter(UpdateType.MAJOR, FilterType.EVERYTHING);
-    this._newPointPresenter.init();
-    completelyRemove(this._noWaypointComponent);
-  }
-
-  _setNewPointButtonClickHandler() {
-    this._newPointButton.addEventListener('click', this._newPointButtonClickHandler);
-  }
-
-  _sortTypeChangeHandler(sortType) {
-    if (this._currentSortType === sortType) {
-      return;
-    }
-
-    this._currentSortType = sortType;
-    this._clearTrip();
-    this._renderTrip();
-  }
-
   _renderTrip() {
     if (this._isLoading) {
       this._renderLoading();
@@ -261,15 +186,90 @@ export default class Trip {
     this._renderTripInfo(points);
   }
 
-  destroy() {
-    this._clearTrip({resetSortType: true});
-    const points = this._getPoints();
-    this._renderTripInfo(points);
-    completelyRemove(this._waypointListComponent);
-    completelyRemove(this._boardComponent);
-    this._newPointButton.disabled = true;
+  _setNewPointButtonClickHandler() {
+    this._newPointButton.addEventListener('click', this._newPointButtonClickHandler);
+  }
 
-    this._pointsModel.removeObserver(this._modelEventHandler);
-    this._filterModel.removeObserver(this._modelEventHandler);
+  _modeChangeHandler() {
+    this._newPointPresenter.removeCreatingForm();
+    Object
+      .values(this._pointPresenter)
+      .forEach((waypointPresenter) => waypointPresenter.resetView());
+  }
+
+  _viewActionHandler(actionType, updateType, updating) {
+    switch (actionType) {
+      case UserAction.UPDATE_WAYPOINT:
+        this._pointPresenter[updating.id].setViewState(State.SAVING);
+        this._api.updatePoint(updating).then((response) => {
+          this._pointsModel.updatePoint(updateType, response);
+        }).catch(() => {
+          this._pointPresenter[updating.id].setViewState(State.ABORTING);
+        });
+        break;
+      case UserAction.ADD_WAYPOINT:
+        this._newPointPresenter.setViewState(State.SAVING);
+        this._api.addPoint(updating).then((response) => {
+          this._pointsModel.addPoint(updateType, response);
+        }).catch(() => {
+          this._newPointPresenter.setViewState(State.ABORTING);
+        });
+        break;
+      case UserAction.DELETE_WAYPOINT:
+        this._pointPresenter[updating.id].setViewState(State.DELETING);
+        this._api.deletePoint(updating).then(() => {
+          this._pointsModel.deletePoint(updateType, updating);
+        }).catch(() => {
+          this._pointPresenter[updating.id].setViewState(State.ABORTING);
+        });
+        break;
+    }
+  }
+
+  _modelEventHandler(updateType, data) {
+    switch (updateType) {
+      case UpdateType.PATCH:
+        this._pointPresenter[data.id].init(data);
+        break;
+      case UpdateType.MINOR:
+        this._clearTrip();
+        this._renderTrip();
+        break;
+      case UpdateType.MAJOR:
+        this._clearTrip({resetSortType: true});
+        this._renderTrip();
+        break;
+      case UpdateType.INIT:
+        this._isLoading = false;
+        completelyRemove(this._loadingComponent);
+        this._renderTrip();
+        break;
+    }
+  }
+
+  _removeCreatingFormHandler() {
+    this._newPointPresenter.removeCreatingForm();
+  }
+
+  _newPointButtonClickHandler(evt) {
+    if (!isOnline()) {
+      toast('You can\'t create point offline');
+      return;
+    }
+    evt.preventDefault();
+    this._currentSortType = SortType.DAY;
+    this._filterModel.setFilter(UpdateType.MAJOR, FilterType.EVERYTHING);
+    this._newPointPresenter.init();
+    completelyRemove(this._noWaypointComponent);
+  }
+
+  _sortTypeChangeHandler(sortType) {
+    if (this._currentSortType === sortType) {
+      return;
+    }
+
+    this._currentSortType = sortType;
+    this._clearTrip();
+    this._renderTrip();
   }
 }

@@ -36,6 +36,23 @@ export default class Filter {
     this._setDisabled();
   }
 
+  _getFilters() {
+    return [
+      {
+        type: FilterType.EVERYTHING,
+        name: 'Everything',
+      },
+      {
+        type: FilterType.FUTURE,
+        name: 'Future',
+      },
+      {
+        type: FilterType.PAST,
+        name: 'Past',
+      },
+    ];
+  }
+
   _setDisabled() {
     const filterButtons = this._filterComponent.getElement().querySelectorAll('input');
     const points = this._pointsModel.getDataItems().slice();
@@ -56,22 +73,5 @@ export default class Filter {
     }
 
     this._filterModel.setFilter(UpdateType.MAJOR, filterType);
-  }
-
-  _getFilters() {
-    return [
-      {
-        type: FilterType.EVERYTHING,
-        name: 'Everything',
-      },
-      {
-        type: FilterType.FUTURE,
-        name: 'Future',
-      },
-      {
-        type: FilterType.PAST,
-        name: 'Past',
-      },
-    ];
   }
 }

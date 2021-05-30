@@ -18,15 +18,6 @@ export default class SiteMenu extends AbstractView {
     </nav>`;
   }
 
-  _menuClickHandler(evt) {
-    if (evt.target.tagName !== 'A') {
-      return;
-    }
-
-    evt.preventDefault();
-    this._callback.menuClick(evt.target.dataset.menuItem);
-  }
-
   setMenuClickHandler(callback) {
     this._callback.menuClick = callback;
     this.getElement().addEventListener('click', this._menuClickHandler);
@@ -40,5 +31,14 @@ export default class SiteMenu extends AbstractView {
     this._tabs.forEach((tab) => {
       tab.dataset.menuItem === menuItem ? tab.classList.add(BUTTON_CLASS_ACTIVE) : tab.classList.remove(BUTTON_CLASS_ACTIVE);
     });
+  }
+
+  _menuClickHandler(evt) {
+    if (evt.target.tagName !== 'A') {
+      return;
+    }
+
+    evt.preventDefault();
+    this._callback.menuClick(evt.target.dataset.menuItem);
   }
 }

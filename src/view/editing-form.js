@@ -42,36 +42,6 @@ export default class EditingForm extends SmartView {
     this._destinationsModel.addObserver(this._modelDestinationsEventHandler);
   }
 
-  _getOfferTemplate(pointOffers) {
-    if (pointOffers) {
-      const templates = pointOffers.map(({title, price}) => {
-        const isSelectedOffer = this._point.offers.map((item) => item.title).includes(title);
-        const offerTitle = [title].join('-');
-        return `<div class="event__offer-selector">
-        <input class="event__offer-checkbox  visually-hidden" data-title="${title}" data-price="${price}" id="event-offer-${offerTitle}-1" ${this._isPreviousPoint && isSelectedOffer ? 'checked' : ''} type="checkbox" name="event-offer">
-        <label class="event__offer-label" for="event-offer-${offerTitle}-1">
-          <span class="event__offer-title">${title}</span>
-          &plus;&euro;&nbsp;
-          <span class="event__offer-price">${price}</span>
-        </label>
-      </div>`;
-      });
-      return templates.join(' ');
-    }
-    return '';
-  }
-
-  _getDestinationForSelect(destinationNames) {
-    return destinationNames.map((item) => {return `<option value="${item}"></option>`;}).join(' ');
-  }
-
-  _getTypesForSelect(allOffers) {
-    return allOffers.map((item) => {return `<div class="event__type-item">
-        <input id="event-type-${item}-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${item}">
-        <label class="event__type-label  event__type-label--${item}" for="event-type-${item}-1">${capitalizeFirstLetter(item)}</label>
-      </div>`;}).join(' ');
-  }
-
   getTemplate() {
     const {type, dateFrom, dateTo, basePrice, destination, offers} = this._point;
     const {name, description, pictures} = destination;
@@ -174,6 +144,118 @@ export default class EditingForm extends SmartView {
     this._removeCalendarFormInput();
   }
 
+  _getOfferTemplate(pointOffers) {
+    if (pointOffers) {
+      const templates = pointOffers.map(({title, price}) => {
+        const isSelectedOffer = this._point.offers.map((item) => item.title).includes(title);
+        const offerTitle = [title].join('-');
+        return `<div class="event__offer-selector">
+        <input class="event__offer-checkbox  visually-hidden" data-title="${title}" data-price="${price}" id="event-offer-${offerTitle}-1" ${this._isPreviousPoint && isSelectedOffer ? 'checked' : ''} type="checkbox" name="event-offer">
+        <label class="event__offer-label" for="event-offer-${offerTitle}-1">
+          <span class="event__offer-title">${title}</span>
+          &plus;&euro;&nbsp;
+          <span class="event__offer-price">${price}</span>
+        </label>
+      </div>`;
+      });
+      return templates.join(' ');
+    }
+    return '';
+  }
+
+  reset(point) {
+    this.updateData(
+      point,
+    );
+  }
+
+  _getDestinationForSelect(destinationNames) {
+    return destinationNames.map((item) => {return `<option value="${item}"></option>`;}).join(' ');
+  }
+
+  _getTypesForSelect(allOffers) {
+    return allOffers.map((item) => {return `<div class="event__type-item">
+        <input id="event-type-${item}-1" class="event__type-input  visually-hidden" type="radio" name="event-type" value="${item}">
+        <label class="event__type-label  event__type-label--${item}" for="event-type-${item}-1">${capitalizeFirstLetter(item)}</label>
+      </div>`;}).join(' ');
+  }
+
+  _setInputOfferClickHandler() {
+    this.getElement().querySelector('.event__details').addEventListener('change', this._inputOfferClickHandler);
+  }
+
+  setEditingFormSubmitHandler(callback) {
+    this._callback.editingFormSubmit = callback;
+    this.getElement().querySelector('form').addEventListener('submit', this._editingFormSubmitHandler);
+  }
+
+  setRollDownButtonClickHandler(callback) {
+    this._callback.rollDownButtonClick = callback;
+    this.getElement().querySelector('.event__rollup-btn').addEventListener('click', this._rollDownButtonClickHandler);
+  }
+
+  setInnerHandlers() {
+    this.getElement().querySelector('.event__type-group').addEventListener('change', this._groupTypeChangeHandler);
+    this.getElement().querySelector('.event__input--destination').addEventListener('change', this._inputEventDestinationChangeHandler);
+    this.getElement().querySelector('#event-start-time-1').addEventListener('input', this._inputTimeStartChangeHandler);
+    this.getElement().querySelector('#event-end-time-1').addEventListener('input', this._inputTimeEndChangeHandler);
+    this._setInputOfferClickHandler();
+    this.getElement().querySelector('.event__input--price').addEventListener('input', this._inputBasePriceChangeHandler);
+    this._setCalendarFormInput();
+  }
+
+  setFormState(state) {
+    const creatingFormSaveButton = this.getElement().querySelector('.event__save-btn');
+    const creatingFormDeleteButton = this.getElement().querySelector('.event__reset-btn');
+    const creatingFormInputs = this.getElement().querySelectorAll('input');
+
+    switch (state) {
+      case State.SAVING:
+        creatingFormSaveButton.disabled = true;
+        creatingFormSaveButton.textContent = 'Saving...';
+        creatingFormInputs.forEach((element) => element.disabled = true);
+        break;
+      case State.DELETING:
+        creatingFormDeleteButton.disabled = true;
+        creatingFormDeleteButton.textContent = 'Deleting...';
+        creatingFormInputs.forEach((element) => element.disabled = true);
+        break;
+      case State.ABORTING:
+        creatingFormDeleteButton.disabled = false;
+        creatingFormSaveButton.textContent = 'Save';
+        creatingFormDeleteButton.disabled = false;
+        creatingFormDeleteButton.textContent = 'Delete';
+        this.shake();
+        break;
+    }
+  }
+
+  setButtonDeleteClickHandler(callback) {
+    this._callback.buttonDeleteClick = callback;
+    this.getElement().querySelector('.event__reset-btn').addEventListener('click', this._buttonDeleteClickHandler);
+  }
+
+  _setCalendarFormInput() {
+    if (this._datepicker.length > 0) {
+      this._datepicker.forEach((datepicker) => datepicker.destroy());
+      this._datepicker = [];
+    }
+    const eventTimeInput = this.getElement().querySelectorAll('.event__input--time');
+    eventTimeInput.forEach((item) => {
+      this._datepicker.push(flatpickr(item, {
+        enableTime: true,
+        dateFormat: 'y/m/d H:i',
+      }));
+    });
+  }
+
+  _removeCalendarFormInput() {
+    if (this._datepicker.length > 0) {
+      this._datepicker.forEach((datepicker) => datepicker.destroy());
+      this._datepicker = [];
+    }
+  }
+
   _editingFormSubmitHandler(evt) {
     evt.preventDefault();
     this._removeCalendarFormInput();
@@ -245,10 +327,6 @@ export default class EditingForm extends SmartView {
     }
   }
 
-  _setInputOfferClickHandler() {
-    this.getElement().querySelector('.event__details').addEventListener('change', this._inputOfferClickHandler);
-  }
-
   _inputEventDestinationChangeHandler(evt) {
     if (this._destinationsModel.isLoading) {
       return;
@@ -305,88 +383,10 @@ export default class EditingForm extends SmartView {
     this._callback.rollDownButtonClick();
   }
 
-  setEditingFormSubmitHandler(callback) {
-    this._callback.editingFormSubmit = callback;
-    this.getElement().querySelector('form').addEventListener('submit', this._editingFormSubmitHandler);
-  }
-
-  setRollDownButtonClickHandler(callback) {
-    this._callback.rollDownButtonClick = callback;
-    this.getElement().querySelector('.event__rollup-btn').addEventListener('click', this._rollDownButtonClickHandler);
-  }
-
-  setInnerHandlers() {
-    this.getElement().querySelector('.event__type-group').addEventListener('change', this._groupTypeChangeHandler);
-    this.getElement().querySelector('.event__input--destination').addEventListener('change', this._inputEventDestinationChangeHandler);
-    this.getElement().querySelector('#event-start-time-1').addEventListener('input', this._inputTimeStartChangeHandler);
-    this.getElement().querySelector('#event-end-time-1').addEventListener('input', this._inputTimeEndChangeHandler);
-    this._setInputOfferClickHandler();
-    this.getElement().querySelector('.event__input--price').addEventListener('input', this._inputBasePriceChangeHandler);
-    this._setCalendarFormInput();
-  }
-
-  reset(point) {
-    this.updateData(
-      point,
-    );
-  }
-
-  _setCalendarFormInput() {
-    if (this._datepicker.length > 0) {
-      this._datepicker.forEach((datepicker) => datepicker.destroy());
-      this._datepicker = [];
-    }
-    const eventTimeInput = this.getElement().querySelectorAll('.event__input--time');
-    eventTimeInput.forEach((item) => {
-      this._datepicker.push(flatpickr(item, {
-        enableTime: true,
-        dateFormat: 'y/m/d H:i',
-      }));
-    });
-  }
-
-  _removeCalendarFormInput() {
-    if (this._datepicker.length > 0) {
-      this._datepicker.forEach((datepicker) => datepicker.destroy());
-      this._datepicker = [];
-    }
-  }
-
   _buttonDeleteClickHandler(evt) {
     evt.preventDefault();
     this._removeModelEventsHandler();
     this._removeCalendarFormInput();
     this._callback.buttonDeleteClick(this._point);
-  }
-
-  setButtonDeleteClickHandler(callback) {
-    this._callback.buttonDeleteClick = callback;
-    this.getElement().querySelector('.event__reset-btn').addEventListener('click', this._buttonDeleteClickHandler);
-  }
-
-  setFormState(state) {
-    const creatingFormSaveButton = this.getElement().querySelector('.event__save-btn');
-    const creatingFormDeleteButton = this.getElement().querySelector('.event__reset-btn');
-    const creatingFormInputs = this.getElement().querySelectorAll('input');
-
-    switch (state) {
-      case State.SAVING:
-        creatingFormSaveButton.disabled = true;
-        creatingFormSaveButton.textContent = 'Saving...';
-        creatingFormInputs.forEach((element) => element.disabled = true);
-        break;
-      case State.DELETING:
-        creatingFormDeleteButton.disabled = true;
-        creatingFormDeleteButton.textContent = 'Deleting...';
-        creatingFormInputs.forEach((element) => element.disabled = true);
-        break;
-      case State.ABORTING:
-        creatingFormDeleteButton.disabled = false;
-        creatingFormSaveButton.textContent = 'Save';
-        creatingFormDeleteButton.disabled = false;
-        creatingFormDeleteButton.textContent = 'Delete';
-        this.shake();
-        break;
-    }
   }
 }

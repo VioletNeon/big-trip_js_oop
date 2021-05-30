@@ -54,6 +54,15 @@ export default class Point {
     completelyRemove(previousWaypointComponent);
   }
 
+  setViewState(state) {
+    if (this._editingFormComponent === null) {
+      return;
+    }
+    this._editingFormComponent.setFormState(state);
+    this._destinationsModel.removeObserver();
+    this._offersPointModel.removeObserver();
+  }
+
   destroy() {
     completelyRemove(this._waypointComponent);
     completelyRemove(this._editingFormComponent);
@@ -63,6 +72,19 @@ export default class Point {
     if (this._mode !== Mode.DEFAULT) {
       this._replaceEditingFormToWaypoint();
     }
+  }
+
+  _replaceWaypointToEditingForm() {
+    replace(this._editingFormComponent, this._waypointComponent);
+    this._changeMode();
+    this._mode = Mode.EDITING;
+  }
+
+  _replaceEditingFormToWaypoint() {
+    replace(this._waypointComponent, this._editingFormComponent);
+    this._mode = Mode.DEFAULT;
+    this._destinationsModel.removeObserver();
+    this._offersPointModel.removeObserver();
   }
 
   _favoriteClickHandler() {
@@ -77,19 +99,6 @@ export default class Point {
         },
       ),
     );
-  }
-
-  _replaceWaypointToEditingForm() {
-    replace(this._editingFormComponent, this._waypointComponent);
-    this._changeMode();
-    this._mode = Mode.EDITING;
-  }
-
-  _replaceEditingFormToWaypoint() {
-    replace(this._waypointComponent, this._editingFormComponent);
-    this._mode = Mode.DEFAULT;
-    this._destinationsModel.removeObserver();
-    this._offersPointModel.removeObserver();
   }
 
   _escKeyDownHandler(evt) {
@@ -148,14 +157,5 @@ export default class Point {
       UpdateType.MINOR,
       point,
     );
-  }
-
-  setViewState(state) {
-    if (this._editingFormComponent === null) {
-      return;
-    }
-    this._editingFormComponent.setFormState(state);
-    this._destinationsModel.removeObserver();
-    this._offersPointModel.removeObserver();
   }
 }

@@ -18,8 +18,6 @@ const STORE_PREFIX = 'taskmanager-localstorage';
 const STORE_VER = 'v14';
 const STORE_NAME = `${STORE_PREFIX}-${STORE_VER}`;
 
-let currentMenuItem = MenuItem.TABLE;
-
 const mainEventsContainer = document.querySelector('main .page-body__container');
 const headerContainer = document.querySelector('.page-header__container');
 const tripNavigation = headerContainer.querySelector('.trip-controls__navigation');
@@ -37,8 +35,6 @@ const filterModel = new FilterModel();
 
 const siteMenuComponent = new SiteMenuView();
 
-let statsComponent = null;
-
 const tripPresenterArguments = {
   headerContainer: headerContainer,
   mainContainer: mainEventsContainer,
@@ -51,6 +47,8 @@ const tripPresenterArguments = {
 
 const tripPresenter = new TripPresenter(tripPresenterArguments);
 const filterPresenter = new FilterPresenter(tripFilter, filterModel, pointsModel);
+let currentMenuItem = MenuItem.TABLE;
+let statsComponent = null;
 
 const siteMenuClickHandler = (menuItem) => {
   if (currentMenuItem === menuItem) {

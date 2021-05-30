@@ -54,6 +54,26 @@ export default class NewPoint {
     render(this._container, this._creatingFormComponent, RenderPosition.AFTERBEGIN);
   }
 
+  setViewState(state) {
+    this._creatingFormComponent.setFormState(state);
+    this._destinationsModel.removeObserver();
+    this._offersPointModel.removeObserver();
+  }
+
+  removeCreatingForm() {
+    if (this._creatingFormComponent === null) {
+      return;
+    }
+    this._creatingFormComponent.removeCalendarFormInput();
+    this._offersPointModel.removeObserver();
+    this._destinationsModel.removeObserver();
+    completelyRemove(this._creatingFormComponent);
+    this._creatingFormComponent = null;
+    this._buttonElement.disabled = false;
+    document.removeEventListener('keydown', this._escKeyDownHandler);
+    this._createdPoint = this._defaultPoint;
+  }
+
   _escKeyDownHandler(evt) {
     if (evt.key === 'Escape' || evt.key === 'Esc') {
       evt.preventDefault();
@@ -161,27 +181,9 @@ export default class NewPoint {
     );
   }
 
-  removeCreatingForm() {
-    if (this._creatingFormComponent === null) {
-      return;
-    }
-    this._creatingFormComponent.removeCalendarFormInput();
-    this._offersPointModel.removeObserver();
-    this._destinationsModel.removeObserver();
-    completelyRemove(this._creatingFormComponent);
-    this._creatingFormComponent = null;
-    this._buttonElement.disabled = false;
-    document.removeEventListener('keydown', this._escKeyDownHandler);
-    this._createdPoint = this._defaultPoint;
-  }
-
   _buttonCancelClickHandler() {
     this.removeCreatingForm();
   }
 
-  setViewState(state) {
-    this._creatingFormComponent.setFormState(state);
-    this._destinationsModel.removeObserver();
-    this._offersPointModel.removeObserver();
-  }
+
 }
