@@ -102,6 +102,7 @@ export default class NewPoint {
     const diffTime = dayjs(formattedEndTime).diff(formattedStartTime, 'm');
     if (diffTime < 0) {
       saveButton.disabled = true;
+      toast('Date from shouldn\'t be later than date to');
       return;
     }
     this._createdPoint.dateFrom = formattedStartTime;
@@ -116,6 +117,7 @@ export default class NewPoint {
     const diffTime = dayjs(formattedEndTime).diff(formattedStartTime, 'm');
     if (diffTime < 0) {
       saveButton.disabled = true;
+      toast('Date from shouldn\'t be later than date to');
       return;
     }
     this._createdPoint.dateTo = formattedEndTime;

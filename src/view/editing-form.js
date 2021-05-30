@@ -6,6 +6,7 @@ import {getSelectedDestinationData} from '../utils/render.js';
 import {getOfferTemplate} from './get-offer-template.js';
 import {getDestinationTemplate} from './get-destination-template.js';
 import {UpdateType, State} from '../utils/const';
+import {toast} from '../utils/toast';
 import he from 'he';
 import '../../node_modules/flatpickr/dist/flatpickr.min.css';
 
@@ -272,6 +273,7 @@ export default class EditingForm extends SmartView {
     const diffTime = dayjs(formattedEndTime).diff(formattedStartTime, 'm');
     if (diffTime < 0) {
       saveButton.disabled = true;
+      toast('Date from shouldn\'t be later than date to');
       return;
     }
     this._editedPoint.dateFrom = formattedStartTime;
@@ -286,6 +288,7 @@ export default class EditingForm extends SmartView {
     const diffTime = dayjs(formattedEndTime).diff(formattedStartTime, 'm');
     if (diffTime < 0) {
       saveButton.disabled = true;
+      toast('Date from shouldn\'t be later than date to');
       return;
     }
     this._editedPoint.dateTo = formattedEndTime;
