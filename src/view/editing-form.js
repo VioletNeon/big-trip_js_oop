@@ -6,6 +6,7 @@ import {getSelectedDestinationData} from '../utils/render.js';
 import {getOfferTemplate} from './get-offer-template.js';
 import {getDestinationTemplate} from './get-destination-template.js';
 import {UpdateType, State} from '../utils/const';
+import {toast} from '../utils/toast';
 import he from 'he';
 import '../../node_modules/flatpickr/dist/flatpickr.min.css';
 
@@ -265,11 +266,33 @@ export default class EditingForm extends SmartView {
   }
 
   _inputTimeStartChangeHandler(evt) {
-    this._editedPoint.dateFrom = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
+    const endTimeInput = document.querySelector('#event-end-time-1');
+    const saveButton = document.querySelector('.event__save-btn');
+    const formattedEndTime = dayjs(endTimeInput.value, 'YY/MM/DD HH:mm');
+    const formattedStartTime = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
+    const diffTime = dayjs(formattedEndTime).diff(formattedStartTime, 'm');
+    if (diffTime < 0) {
+      saveButton.disabled = true;
+      toast('Date from shouldn\'t be later than date to');
+      return;
+    }
+    this._editedPoint.dateFrom = formattedStartTime;
+    saveButton.disabled = false;
   }
 
   _inputTimeEndChangeHandler(evt) {
-    this._editedPoint.dateTo = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
+    const startTimeInput = document.querySelector('#event-start-time-1');
+    const saveButton = document.querySelector('.event__save-btn');
+    const formattedStartTime = dayjs(startTimeInput.value, 'YY/MM/DD HH:mm');
+    const formattedEndTime = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
+    const diffTime = dayjs(formattedEndTime).diff(formattedStartTime, 'm');
+    if (diffTime < 0) {
+      saveButton.disabled = true;
+      toast('Date from shouldn\'t be later than date to');
+      return;
+    }
+    this._editedPoint.dateTo = formattedEndTime;
+    saveButton.disabled = false;
   }
 
   _inputBasePriceChangeHandler(evt) {
@@ -358,6 +381,10 @@ export default class EditingForm extends SmartView {
         creatingFormInputs.forEach((element) => element.disabled = true);
         break;
       case State.ABORTING:
+        creatingFormDeleteButton.disabled = false;
+        creatingFormSaveButton.textContent = 'Save';
+        creatingFormDeleteButton.disabled = false;
+        creatingFormDeleteButton.textContent = 'Delete';
         this.shake();
         break;
     }

@@ -2,16 +2,21 @@ import TripPresenter from './presenter/trip.js';
 import PointsModel from './model/points.js';
 import OffersModel from './model/offers.js';
 import DestinationsModel from './model/destinations.js';
-import Api from './api.js';
+import Api from './api/api.js';
 import FilterModel from './model/filter.js';
 import FilterPresenter from './presenter/filter.js';
 import SiteMenuView from './view/site-menu.js';
 import StatsView from './view/stats.js';
 import {render, completelyRemove} from './utils/render.js';
 import {MenuItem, UpdateType} from './utils/const.js';
+import Store from './api/store.js';
+import Provider from './api/provider.js';
 
 const AUTHORIZATION = 'Basic jdHk3ll7GFjXs98uvj';
 const END_POINT = 'https://14.ecmascript.pages.academy/big-trip';
+const STORE_PREFIX = 'taskmanager-localstorage';
+const STORE_VER = 'v14';
+const STORE_NAME = `${STORE_PREFIX}-${STORE_VER}`;
 
 let currentMenuItem = MenuItem.TABLE;
 
@@ -22,12 +27,15 @@ const tripFilter = headerContainer.querySelector('.trip-controls__filters');
 
 const api = new Api(END_POINT, AUTHORIZATION);
 
-const siteMenuComponent = new SiteMenuView();
+const store = new Store(STORE_NAME, window.localStorage);
+const apiWithProvider = new Provider(api, store);
 
 const pointsModel = new PointsModel();
 const offersModel = new OffersModel();
 const destinationsModel = new DestinationsModel();
 const filterModel = new FilterModel();
+
+const siteMenuComponent = new SiteMenuView();
 
 let statsComponent = null;
 
@@ -38,7 +46,7 @@ const tripPresenterArguments = {
   offersModel,
   pointsModel,
   filterModel,
-  api,
+  apiWithProvider,
 };
 
 const tripPresenter = new TripPresenter(tripPresenterArguments);
@@ -70,7 +78,7 @@ const siteMenuClickHandler = (menuItem) => {
 filterPresenter.init();
 tripPresenter.init();
 
-api.getPoints()
+apiWithProvider.getPoints()
   .then((points) => {
     pointsModel.setDataItems(UpdateType.INIT, points);
     render(tripNavigation, siteMenuComponent);
@@ -95,3 +103,17 @@ api.getDestinations().then((destinations) => {
   .catch(() => {
     destinationsModel.setDataItems(UpdateType.INIT, []);
   });
+
+
+window.addEventListener('load', () => {
+  navigator.serviceWorker.register('/sw.js');
+});
+
+window.addEventListener('online', () => {
+  document.title = document.title.replace(' [offline]', '');
+  apiWithProvider.sync();
+});
+
+window.addEventListener('offline', () => {
+  document.title += ' [offline]';
+});

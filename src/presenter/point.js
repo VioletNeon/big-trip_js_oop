@@ -2,6 +2,8 @@ import EditingFormView from '../view/editing-form.js';
 import WaypointView from '../view/waypoint.js';
 import {render, replace, completelyRemove} from '../utils/render.js';
 import {Mode, UserAction, UpdateType} from '../utils/const.js';
+import {isOnline} from '../utils/common.js';
+import {toast} from '../utils/toast.js';
 
 
 export default class Point {
@@ -100,6 +102,11 @@ export default class Point {
   }
 
   _rollUpButtonClickHandler() {
+    if (!isOnline()) {
+      toast('You can\'t edit point offline');
+      return;
+    }
+
     this._editingFormComponent = new EditingFormView(this._point, this._destinationsModel, this._offersPointModel);
     this._editingFormComponent.setButtonDeleteClickHandler(this._buttonDeleteClickHandler);
     this._editingFormComponent.setRollDownButtonClickHandler(this._rollDownButtonClickHandler);
@@ -117,6 +124,11 @@ export default class Point {
   }
 
   _editingFormSubmitHandler(update) {
+    if (!isOnline()) {
+      toast('You can\'t save point offline');
+      return;
+    }
+
     this._changeData(
       UserAction.UPDATE_WAYPOINT,
       UpdateType.MINOR,
@@ -126,6 +138,11 @@ export default class Point {
   }
 
   _buttonDeleteClickHandler(point) {
+    if (!isOnline()) {
+      toast('You can\'t delete point offline');
+      return;
+    }
+
     this._changeData(
       UserAction.DELETE_WAYPOINT,
       UpdateType.MINOR,

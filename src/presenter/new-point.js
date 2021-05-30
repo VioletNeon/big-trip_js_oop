@@ -1,10 +1,11 @@
 import CreatingFormView from '../view/creating-form.js';
-import {checkOfferTypes} from '../utils/common.js';
+import {checkOfferTypes, isOnline} from '../utils/common.js';
 import {getSelectedDestinationData, render, RenderPosition, completelyRemove} from '../utils/render.js';
 import {getOfferTemplate} from '../view/get-offer-template.js';
 import {getDestinationTemplate} from '../view/get-destination-template.js';
 import {UserAction, UpdateType} from '../utils/const.js';
 import {dayjs} from '../utils/date.js';
+import {toast} from '../utils/toast';
 
 export default class NewPoint {
   constructor(newPointArguments) {
@@ -94,11 +95,33 @@ export default class NewPoint {
   }
 
   _inputTimeStartChangeHandler(evt) {
-    this._createdPoint.dateFrom = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
+    const endTimeInput = document.querySelector('#event-end-time-1');
+    const saveButton = document.querySelector('.event__save-btn');
+    const formattedEndTime = dayjs(endTimeInput.value, 'YY/MM/DD HH:mm');
+    const formattedStartTime = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
+    const diffTime = dayjs(formattedEndTime).diff(formattedStartTime, 'm');
+    if (diffTime < 0) {
+      saveButton.disabled = true;
+      toast('Date from shouldn\'t be later than date to');
+      return;
+    }
+    this._createdPoint.dateFrom = formattedStartTime;
+    saveButton.disabled = false;
   }
 
   _inputTimeEndChangeHandler(evt) {
-    this._createdPoint.dateTo = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
+    const startTimeInput = document.querySelector('#event-start-time-1');
+    const saveButton = document.querySelector('.event__save-btn');
+    const formattedStartTime = dayjs(startTimeInput.value, 'YY/MM/DD HH:mm');
+    const formattedEndTime = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
+    const diffTime = dayjs(formattedEndTime).diff(formattedStartTime, 'm');
+    if (diffTime < 0) {
+      saveButton.disabled = true;
+      toast('Date from shouldn\'t be later than date to');
+      return;
+    }
+    this._createdPoint.dateTo = formattedEndTime;
+    saveButton.disabled = false;
   }
 
   _inputBasePriceChangeHandler(evt) {
@@ -122,6 +145,10 @@ export default class NewPoint {
   }
 
   _creatingFormSubmitHandler() {
+    if (!isOnline()) {
+      toast('You can\'t save point offline');
+      return;
+    }
     const isNotCompletelyField = Object.values(this._createdPoint).some((value) => value === null);
     if (isNotCompletelyField) {
       this.removeCreatingForm();
