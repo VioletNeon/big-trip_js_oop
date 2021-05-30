@@ -95,11 +95,31 @@ export default class NewPoint {
   }
 
   _inputTimeStartChangeHandler(evt) {
-    this._createdPoint.dateFrom = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
+    const endTimeInput = document.querySelector('#event-end-time-1');
+    const saveButton = document.querySelector('.event__save-btn');
+    const formattedEndTime = dayjs(endTimeInput.value, 'YY/MM/DD HH:mm');
+    const formattedStartTime = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
+    const diffTime = dayjs(formattedEndTime).diff(formattedStartTime, 'm');
+    if (diffTime < 0) {
+      saveButton.disabled = true;
+      return;
+    }
+    this._createdPoint.dateFrom = formattedStartTime;
+    saveButton.disabled = false;
   }
 
   _inputTimeEndChangeHandler(evt) {
-    this._createdPoint.dateTo = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
+    const startTimeInput = document.querySelector('#event-start-time-1');
+    const saveButton = document.querySelector('.event__save-btn');
+    const formattedStartTime = dayjs(startTimeInput.value, 'YY/MM/DD HH:mm');
+    const formattedEndTime = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
+    const diffTime = dayjs(formattedEndTime).diff(formattedStartTime, 'm');
+    if (diffTime < 0) {
+      saveButton.disabled = true;
+      return;
+    }
+    this._createdPoint.dateTo = formattedEndTime;
+    saveButton.disabled = false;
   }
 
   _inputBasePriceChangeHandler(evt) {
