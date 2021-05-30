@@ -41,4 +41,8 @@ const getIdentifier = () => {
 
 const makeItemsUniq = (items) => [...new Set(items)];
 
-export {capitalizeFirstLetter, getRandomItem, getRandomItems, getRandomInteger, checkOfferTypes, getIdentifier, makeItemsUniq};
+const isOnline = () => {
+  return window.navigator.onLine;
+};
+
+export {capitalizeFirstLetter, getRandomItem, getRandomItems, getRandomInteger, checkOfferTypes, getIdentifier, makeItemsUniq, isOnline};

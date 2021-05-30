@@ -10,6 +10,8 @@ import PointPresenter from '../presenter/point.js';
 import {SortType, UpdateType, UserAction, FilterType, State} from '../utils/const.js';
 import {filter} from '../utils/filter.js';
 import {sortWaypointTime, sortWaypointPrice, sortWaypointDay} from '../utils/sorting.js';
+import {isOnline} from '../utils/common.js';
+import {toast} from '../utils/toast';
 
 export default class Trip {
   constructor(tripPresenterArguments) {
@@ -19,14 +21,14 @@ export default class Trip {
       offersModel,
       pointsModel,
       filterModel,
-      api} = tripPresenterArguments;
+      apiWithProvider} = tripPresenterArguments;
     this._headerContainer = headerContainer;
     this._mainContainer = mainContainer;
     this._destinationsModel = destinationsModel;
     this._offersModel = offersModel;
     this._pointsModel = pointsModel;
     this._filterModel = filterModel;
-    this._api = api;
+    this._api = apiWithProvider;
     this._isLoading = true;
     this._waypointListComponent = new WaypointList();
     this._boardComponent = new BoardView();
@@ -216,6 +218,10 @@ export default class Trip {
   }
 
   _newPointButtonClickHandler(evt) {
+    if (!isOnline()) {
+      toast('You can\'t create point offline');
+      return;
+    }
     evt.preventDefault();
     this._currentSortType = SortType.DAY;
     this._filterModel.setFilter(UpdateType.MAJOR, FilterType.EVERYTHING);
