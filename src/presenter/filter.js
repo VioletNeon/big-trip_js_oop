@@ -1,7 +1,6 @@
 import FilterView from '../view/filter.js';
 import {render, replace, completelyRemove} from '../utils/render.js';
 import {FilterType, UpdateType} from '../utils/const.js';
-import {filter} from '../utils/filter.js';
 
 export default class Filter {
   constructor(filterContainer, filterModel, pointsModel) {
@@ -22,7 +21,7 @@ export default class Filter {
     const filters = this._getFilters();
     const prevFilterComponent = this._filterComponent;
 
-    this._filterComponent = new FilterView(filters, this._filterModel.getFilter());
+    this._filterComponent = new FilterView(filters, this._filterModel.getFilter(), this._pointsModel);
     this._filterComponent.setFilterTypeChangeHandler(this._filterTypeChangeHandler);
 
     if (prevFilterComponent === null) {
@@ -54,13 +53,7 @@ export default class Filter {
   }
 
   _setDisabled() {
-    const filterButtons = this._filterComponent.getElement().querySelectorAll('input');
-    const points = this._pointsModel.getDataItems().slice();
-    filterButtons.forEach((filterButton) => {
-      if (filter[filterButton.value](points).length === 0) {
-        filterButton.disabled = true;
-      }
-    });
+    this._filterComponent.setDisabled();
   }
 
   _modelEventHandler() {

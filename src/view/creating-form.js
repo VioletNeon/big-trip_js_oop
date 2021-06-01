@@ -1,9 +1,10 @@
 import SmartView from './smart.js';
-import {capitalizeFirstLetter} from '../utils/common.js';
+import {capitalizeFirstLetter, checkOfferTypes} from '../utils/common.js';
 import {flatpickr, dayjs, changeDateFormat} from '../utils/date.js';
 import he from 'he';
 import {UpdateType, State} from '../utils/const';
 
+const DEFAULT_TYPE = 'flight';
 
 export default class CreatingForm extends SmartView {
   constructor(destinationsModel, offersPointModel) {
@@ -13,11 +14,11 @@ export default class CreatingForm extends SmartView {
     this._datepicker = [];
     this._creatingFormSubmitHandler = this._creatingFormSubmitHandler.bind(this);
     this._groupTypeChangeHandler = this._groupTypeChangeHandler.bind(this);
-    this._inputEventDestinationChangeHandler = this._inputEventDestinationChangeHandler.bind(this);
-    this._inputOfferClickHandler = this._inputOfferClickHandler.bind(this);
-    this._inputTimeStartChangeHandler = this._inputTimeStartChangeHandler.bind(this);
-    this._inputTimeEndChangeHandler = this._inputTimeEndChangeHandler.bind(this);
-    this._inputBasePriceChangeHandler = this._inputBasePriceChangeHandler.bind(this);
+    this._eventDestinationChangeHandler = this._eventDestinationChangeHandler.bind(this);
+    this._offerChangeHandler = this._offerChangeHandler.bind(this);
+    this._timeStartInputHandler = this._timeStartInputHandler.bind(this);
+    this._timeEndInputHandler = this._timeEndInputHandler.bind(this);
+    this._basePriceInputHandler = this._basePriceInputHandler.bind(this);
     this._buttonCancelClickHandler = this._buttonCancelClickHandler.bind(this);
     this._modelOffersEventHandler = this._modelOffersEventHandler.bind(this);
     this._modelDestinationsEventHandler = this._modelDestinationsEventHandler.bind(this);
@@ -27,19 +28,27 @@ export default class CreatingForm extends SmartView {
   }
 
   getTemplate() {
-    const names = this._destinationsModel.getDataItems().map(({name}) => name);
-    const allOffers = this._offersPointModel.getDataItems().map(({type}) => type);
     const defaultDate = changeDateFormat(dayjs(), 'YY/MM/DD HH:mm');
-    let offerTypesTemplate = '';
+    const typeWaypoint = capitalizeFirstLetter(DEFAULT_TYPE);
+    let typesForSelect = '';
     let nameDestinationsTemplate = '';
+    let offersForSelect = '';
 
     const isLoadingOffers = this._offersPointModel.isLoading;
     const isLoadingDestinations = this._destinationsModel.isLoading;
 
     if (!isLoadingOffers) {
-      offerTypesTemplate = this._getTypesForSelect(allOffers);
+      this._offersPointModel.removeObserver();
+      const typeOffers = this._offersPointModel.getDataItems();
+      const allOffers = typeOffers.map(({type}) => type);
+      typesForSelect = this._getTypesForSelect(allOffers);
+      const checkedOffers = checkOfferTypes(DEFAULT_TYPE, typeOffers);
+      offersForSelect = this._getOfferTemplate(checkedOffers);
     }
+
     if (!isLoadingDestinations) {
+      this._destinationsModel.removeObserver();
+      const names = this._destinationsModel.getDataItems().map(({name}) => name);
       nameDestinationsTemplate = this._getDestinationForSelect(names);
     }
 
@@ -51,16 +60,17 @@ export default class CreatingForm extends SmartView {
             <span class="visually-hidden">Choose event type</span>
             <img class="event__type-icon" width="17" height="17" src="img/icons/flight.png" alt="Event type icon">
           </label>
-          <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" type="checkbox" ${isLoadingOffers ? 'disabled' : ''} required>
+          <input class="event__type-toggle  visually-hidden" id="event-type-toggle-1" value="${DEFAULT_TYPE}" type="checkbox" ${isLoadingOffers ? 'disabled' : ''}>
           <div class="event__type-list">
             <fieldset class="event__type-group">
               <legend class="visually-hidden">Event type</legend>
-              ${offerTypesTemplate}
+              ${typesForSelect}
             </fieldset>
           </div>
         </div>
         <div class="event__field-group  event__field-group--destination">
           <label class="event__label  event__type-output" for="event-destination-1">
+            ${typeWaypoint}
           </label>
           <input class="event__input  event__input--destination" id="event-destination-1" type="text" ${isLoadingDestinations ? 'disabled' : ''} name="event-destination" value="" list="destination-list-1">
           <datalist id="destination-list-1">
@@ -85,9 +95,11 @@ export default class CreatingForm extends SmartView {
         <button class="event__reset-btn" type="reset">Cancel</button>
       </header>
       <section class="event__details">
-        <section class="event__section  event__section--offers">
+        <section class="event__section  event__section--offers ${offersForSelect ? '' : 'visually-hidden'}">
           <h3 class="event__section-title  event__section-title--offers">Offers</h3>
-          <div class="event__available-offers"></div>
+          <div class="event__available-offers">
+            ${offersForSelect}
+          </div>
         </section>
         <section class="event__section  event__section--destination visually-hidden">
           <h3 class="event__section-title  event__section-title--destination">Destination</h3>
@@ -103,7 +115,7 @@ export default class CreatingForm extends SmartView {
   }
 
   removeCalendarFormInput() {
-    if (this._datepicker.length > 0) {
+    if (this._datepicker.length) {
       this._datepicker.forEach((datepicker) => datepicker.destroy());
       this._datepicker = [];
     }
@@ -135,13 +147,13 @@ export default class CreatingForm extends SmartView {
     this.getElement().querySelector('.event__type-group').addEventListener('change', this._groupTypeChangeHandler);
   }
 
-  setInputEventDestinationChangeHandler(callback) {
-    this._callback.inputEventDestinationChange = callback;
-    this.getElement().querySelector('.event__input--destination').addEventListener('change', this._inputEventDestinationChangeHandler);
+  setEventDestinationChangeHandler(callback) {
+    this._callback.eventDestinationChange = callback;
+    this.getElement().querySelector('.event__input--destination').addEventListener('change', this._eventDestinationChangeHandler);
   }
 
   setCalendarFormInput() {
-    if (this._datepicker.length > 0) {
+    if (this._datepicker.length) {
       this._datepicker.forEach((datepicker) => datepicker.destroy());
       this._datepicker = [];
     }
@@ -154,24 +166,24 @@ export default class CreatingForm extends SmartView {
     });
   }
 
-  setInputOfferClickHandler(callback) {
-    this._callback.inputOfferClick = callback;
-    this.getElement().querySelector('.event__details').addEventListener('change', this._inputOfferClickHandler);
+  setOfferChangeHandler(callback) {
+    this._callback.offerChange = callback;
+    this.getElement().querySelector('.event__details').addEventListener('change', this._offerChangeHandler);
   }
 
-  setInputTimeStartChangeHandler(callback) {
-    this._callback.inputTimeStartChange = callback;
-    this.getElement().querySelector('#event-start-time-1').addEventListener('input', this._inputTimeStartChangeHandler);
+  setTimeStartInputHandler(callback) {
+    this._callback.timeStartInput = callback;
+    this.getElement().querySelector('#event-start-time-1').addEventListener('input', this._timeStartInputHandler);
   }
 
-  setInputTimeEndChangeHandler(callback) {
-    this._callback.inputTimeEndChange = callback;
-    this.getElement().querySelector('#event-end-time-1').addEventListener('input', this._inputTimeEndChangeHandler);
+  setTimeEndInputHandler(callback) {
+    this._callback.timeEndInput = callback;
+    this.getElement().querySelector('#event-end-time-1').addEventListener('input', this._timeEndInputHandler);
   }
 
-  setInputBasePriceHandler(callback) {
-    this._callback.inputBasePriceChange = callback;
-    this.getElement().querySelector('.event__input--price').addEventListener('input', this._inputBasePriceChangeHandler);
+  setBasePriceInputHandler(callback) {
+    this._callback.basePriceInput = callback;
+    this.getElement().querySelector('.event__input--price').addEventListener('input', this._basePriceInputHandler);
   }
 
   setButtonCancelClickHandler(callback) {
@@ -181,6 +193,24 @@ export default class CreatingForm extends SmartView {
 
   _getDestinationForSelect(destinationNames) {
     return destinationNames.map((item) => {return `<option value="${he.encode(item)}"></option>`;}).join(' ');
+  }
+
+  _getOfferTemplate(pointOffers) {
+    if (pointOffers) {
+      const templates = pointOffers.map(({title, price}) => {
+        const offerTitle = [title].join('-');
+        return `<div class="event__offer-selector">
+        <input class="event__offer-checkbox  visually-hidden" data-title="${title}" data-price="${price}" id="event-offer-${offerTitle}-1" type="checkbox" name="event-offer">
+        <label class="event__offer-label" for="event-offer-${offerTitle}-1">
+          <span class="event__offer-title">${title}</span>
+          &plus;&euro;&nbsp;
+          <span class="event__offer-price">${price}</span>
+        </label>
+      </div>`;
+      });
+      return templates.join(' ');
+    }
+    return '';
   }
 
   _getTypesForSelect(allOffers) {
@@ -221,24 +251,24 @@ export default class CreatingForm extends SmartView {
     this._callback.groupTypeChange(evt);
   }
 
-  _inputEventDestinationChangeHandler(evt) {
-    this._callback.inputEventDestinationChange(evt);
+  _eventDestinationChangeHandler(evt) {
+    this._callback.eventDestinationChange(evt);
   }
 
-  _inputOfferClickHandler(evt) {
-    this._callback.inputOfferClick(evt);
+  _offerChangeHandler(evt) {
+    this._callback.offerChange(evt);
   }
 
-  _inputTimeStartChangeHandler(evt) {
-    this._callback.inputTimeStartChange(evt);
+  _timeStartInputHandler(evt) {
+    this._callback.timeStartInput(evt);
   }
 
-  _inputTimeEndChangeHandler(evt) {
-    this._callback.inputTimeEndChange(evt);
+  _timeEndInputHandler(evt) {
+    this._callback.timeEndInput(evt);
   }
 
-  _inputBasePriceChangeHandler(evt) {
-    this._callback.inputBasePriceChange(evt);
+  _basePriceInputHandler(evt) {
+    this._callback.basePriceInput(evt);
   }
 
   _buttonCancelClickHandler(evt) {

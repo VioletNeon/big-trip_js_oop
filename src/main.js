@@ -6,7 +6,7 @@ import Api from './api/api.js';
 import FilterModel from './model/filter.js';
 import FilterPresenter from './presenter/filter.js';
 import SiteMenuView from './view/site-menu.js';
-import StatsView from './view/stats.js';
+import StatsView from './view/statistics.js';
 import {render, completelyRemove} from './utils/render.js';
 import {MenuItem, UpdateType} from './utils/const.js';
 import Store from './api/store.js';

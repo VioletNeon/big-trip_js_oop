@@ -23,7 +23,7 @@ export default class TripInfo extends AbstractView {
       destinationPoints.push(dateFromDiff, dateToDiff);
       allDestinationNames.add(name);
 
-      if (offers.length > 0) {
+      if (offers.length) {
         offersPrice = offers.map(({price}) => price).reduce((sum, current) => sum + current);
       }
       totalPrice = totalPrice + Number(basePrice) + offersPrice;

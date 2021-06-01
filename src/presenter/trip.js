@@ -132,7 +132,7 @@ export default class Trip {
   }
 
   _renderTripInfo(points) {
-    if (points.length === 0) {
+    if (!points.length) {
       return;
     }
 
@@ -176,7 +176,7 @@ export default class Trip {
 
     const points = this._getPoints();
 
-    if (points.length === 0) {
+    if (!points.length) {
       this._renderNoWaypoints();
       return;
     }

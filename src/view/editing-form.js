@@ -28,12 +28,12 @@ export default class EditingForm extends SmartView {
     };
     this._editingFormSubmitHandler = this._editingFormSubmitHandler.bind(this);
     this._groupTypeChangeHandler = this._groupTypeChangeHandler.bind(this);
-    this._inputTimeStartChangeHandler = this._inputTimeStartChangeHandler.bind(this);
-    this._inputTimeEndChangeHandler = this._inputTimeEndChangeHandler.bind(this);
-    this._inputEventDestinationChangeHandler = this._inputEventDestinationChangeHandler.bind(this);
+    this._timeStartInputHandler = this._timeStartInputHandler.bind(this);
+    this._timeEndInputHandler = this._timeEndInputHandler.bind(this);
+    this._eventDestinationChangeHandler = this._eventDestinationChangeHandler.bind(this);
     this._rollDownButtonClickHandler = this._rollDownButtonClickHandler.bind(this);
-    this._inputOfferClickHandler = this._inputOfferClickHandler.bind(this);
-    this._inputBasePriceChangeHandler = this._inputBasePriceChangeHandler.bind(this);
+    this._offerChangeHandler = this._offerChangeHandler.bind(this);
+    this._basePriceInputHandler = this._basePriceInputHandler.bind(this);
     this._buttonDeleteClickHandler = this._buttonDeleteClickHandler.bind(this);
     this._modelOffersEventHandler = this._modelOffersEventHandler.bind(this);
     this._modelDestinationsEventHandler = this._modelDestinationsEventHandler.bind(this);
@@ -180,8 +180,8 @@ export default class EditingForm extends SmartView {
       </div>`;}).join(' ');
   }
 
-  _setInputOfferClickHandler() {
-    this.getElement().querySelector('.event__details').addEventListener('change', this._inputOfferClickHandler);
+  _setOfferChangeHandler() {
+    this.getElement().querySelector('.event__details').addEventListener('change', this._offerChangeHandler);
   }
 
   setEditingFormSubmitHandler(callback) {
@@ -196,11 +196,11 @@ export default class EditingForm extends SmartView {
 
   setInnerHandlers() {
     this.getElement().querySelector('.event__type-group').addEventListener('change', this._groupTypeChangeHandler);
-    this.getElement().querySelector('.event__input--destination').addEventListener('change', this._inputEventDestinationChangeHandler);
-    this.getElement().querySelector('#event-start-time-1').addEventListener('input', this._inputTimeStartChangeHandler);
-    this.getElement().querySelector('#event-end-time-1').addEventListener('input', this._inputTimeEndChangeHandler);
-    this._setInputOfferClickHandler();
-    this.getElement().querySelector('.event__input--price').addEventListener('input', this._inputBasePriceChangeHandler);
+    this.getElement().querySelector('.event__input--destination').addEventListener('change', this._eventDestinationChangeHandler);
+    this.getElement().querySelector('#event-start-time-1').addEventListener('input', this._timeStartInputHandler);
+    this.getElement().querySelector('#event-end-time-1').addEventListener('input', this._timeEndInputHandler);
+    this._setOfferChangeHandler();
+    this.getElement().querySelector('.event__input--price').addEventListener('input', this._basePriceInputHandler);
     this._setCalendarFormInput();
   }
 
@@ -236,7 +236,7 @@ export default class EditingForm extends SmartView {
   }
 
   _setCalendarFormInput() {
-    if (this._datepicker.length > 0) {
+    if (this._datepicker.length) {
       this._datepicker.forEach((datepicker) => datepicker.destroy());
       this._datepicker = [];
     }
@@ -250,7 +250,7 @@ export default class EditingForm extends SmartView {
   }
 
   _removeCalendarFormInput() {
-    if (this._datepicker.length > 0) {
+    if (this._datepicker.length) {
       this._datepicker.forEach((datepicker) => datepicker.destroy());
       this._datepicker = [];
     }
@@ -283,7 +283,6 @@ export default class EditingForm extends SmartView {
 
       const offers = checkOfferTypes(typePoint, typeOffers);
       getOfferTemplate(offers, this._offersPointModel.isLoading, pointOffers);
-      this._setInputOfferClickHandler();
     }
   }
 
@@ -315,10 +314,9 @@ export default class EditingForm extends SmartView {
     typeOutput.textContent = evt.target.value;
     this._editedPoint.offers = [];
     this._editedPoint.type = evt.target.value;
-    this._setInputOfferClickHandler();
   }
 
-  _inputOfferClickHandler(evt) {
+  _offerChangeHandler(evt) {
     const selectedOfferIndex = this._editedPoint.offers.findIndex((item) => item.title === evt.target.dataset.title);
     if (evt.target.checked && selectedOfferIndex === -1) {
       this._editedPoint.offers.splice(0, 0, {title: evt.target.dataset.title, price: Number(evt.target.dataset.price)});
@@ -327,7 +325,7 @@ export default class EditingForm extends SmartView {
     }
   }
 
-  _inputEventDestinationChangeHandler(evt) {
+  _eventDestinationChangeHandler(evt) {
     if (this._destinationsModel.isLoading) {
       return;
     }
@@ -343,37 +341,47 @@ export default class EditingForm extends SmartView {
     this._editedPoint.destination = Object.assign({}, {name: evt.target.value}, destination);
   }
 
-  _inputTimeStartChangeHandler(evt) {
+  _timeStartInputHandler(evt) {
     const endTimeInput = document.querySelector('#event-end-time-1');
     const saveButton = document.querySelector('.event__save-btn');
     const formattedEndTime = dayjs(endTimeInput.value, 'YY/MM/DD HH:mm');
     const formattedStartTime = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
     const diffTime = dayjs(formattedEndTime).diff(formattedStartTime, 'm');
+    this._editedPoint.dateFrom = formattedStartTime;
+    if (!evt.target.value.length || !endTimeInput.value.length) {
+      saveButton.disabled = true;
+      toast('The input date field must not be empty');
+      return;
+    }
     if (diffTime < 0) {
       saveButton.disabled = true;
       toast('Date from shouldn\'t be later than date to');
       return;
     }
-    this._editedPoint.dateFrom = formattedStartTime;
     saveButton.disabled = false;
   }
 
-  _inputTimeEndChangeHandler(evt) {
+  _timeEndInputHandler(evt) {
     const startTimeInput = document.querySelector('#event-start-time-1');
     const saveButton = document.querySelector('.event__save-btn');
     const formattedStartTime = dayjs(startTimeInput.value, 'YY/MM/DD HH:mm');
     const formattedEndTime = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
     const diffTime = dayjs(formattedEndTime).diff(formattedStartTime, 'm');
+    this._editedPoint.dateTo = formattedEndTime;
+    if (!evt.target.value.length || !startTimeInput.value.length) {
+      saveButton.disabled = true;
+      toast('The input date field must not be empty');
+      return;
+    }
     if (diffTime < 0) {
       saveButton.disabled = true;
       toast('Date from shouldn\'t be later than date to');
       return;
     }
-    this._editedPoint.dateTo = formattedEndTime;
     saveButton.disabled = false;
   }
 
-  _inputBasePriceChangeHandler(evt) {
+  _basePriceInputHandler(evt) {
     this._editedPoint.basePrice = Number(evt.target.value);
   }
 

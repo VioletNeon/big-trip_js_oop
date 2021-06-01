@@ -27,7 +27,7 @@ export default class Point {
 
     this._rollUpButtonClickHandler = this._rollUpButtonClickHandler.bind(this);
     this._rollDownButtonClickHandler = this._rollDownButtonClickHandler.bind(this);
-    this._escKeyDownHandler = this._escKeyDownHandler.bind(this);
+    this._editingFormEscKeyDownHandler = this._editingFormEscKeyDownHandler.bind(this);
     this._editingFormSubmitHandler = this._editingFormSubmitHandler.bind(this);
     this._favoriteClickHandler = this._favoriteClickHandler.bind(this);
     this._buttonDeleteClickHandler = this._buttonDeleteClickHandler.bind(this);
@@ -101,12 +101,12 @@ export default class Point {
     );
   }
 
-  _escKeyDownHandler(evt) {
+  _editingFormEscKeyDownHandler(evt) {
     if (evt.key === 'Escape' || evt.key === 'Esc') {
       evt.preventDefault();
       this._editingFormComponent.reset(this._point);
       this._replaceEditingFormToWaypoint();
-      document.removeEventListener('keydown', this._escKeyDownHandler);
+      document.removeEventListener('keydown', this._editingFormEscKeyDownHandler);
     }
   }
 
@@ -122,14 +122,14 @@ export default class Point {
     this._editingFormComponent.setEditingFormSubmitHandler(this._editingFormSubmitHandler);
     this._editingFormComponent.setInnerHandlers();
     this._replaceWaypointToEditingForm();
-    document.addEventListener('keydown', this._escKeyDownHandler);
+    document.addEventListener('keydown', this._editingFormEscKeyDownHandler);
     this._removeCreatingForm();
   }
 
   _rollDownButtonClickHandler() {
     this._editingFormComponent.reset(this._point);
     this._replaceEditingFormToWaypoint();
-    document.removeEventListener('keydown', this._escKeyDownHandler);
+    document.removeEventListener('keydown', this._editingFormEscKeyDownHandler);
   }
 
   _editingFormSubmitHandler(update) {
@@ -143,7 +143,7 @@ export default class Point {
       UpdateType.MINOR,
       update,
     );
-    document.removeEventListener('keydown', this._escKeyDownHandler);
+    document.removeEventListener('keydown', this._editingFormEscKeyDownHandler);
   }
 
   _buttonDeleteClickHandler(point) {
@@ -157,5 +157,6 @@ export default class Point {
       UpdateType.MINOR,
       point,
     );
+    document.removeEventListener('keydown', this._editingFormEscKeyDownHandler);
   }
 }

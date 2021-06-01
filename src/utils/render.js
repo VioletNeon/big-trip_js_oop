@@ -1,16 +1,16 @@
 import Abstract from '../view/abstract.js';
 
+const RenderPosition = {
+  AFTERBEGIN: 'afterbegin',
+  BEFOREEND: 'beforeend',
+};
+
 const getSelectedDestinationData = (selectedDestinationName, destinations) => {
   for (const {name, description, pictures} of destinations) {
     if (selectedDestinationName === name) {
       return {description, pictures};
     }
   }
-};
-
-const RenderPosition = {
-  AFTERBEGIN: 'afterbegin',
-  BEFOREEND: 'beforeend',
 };
 
 const render = (container, child, place = RenderPosition.BEFOREEND) => {

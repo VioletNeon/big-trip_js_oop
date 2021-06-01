@@ -7,6 +7,8 @@ import {UserAction, UpdateType} from '../utils/const.js';
 import {dayjs} from '../utils/date.js';
 import {toast} from '../utils/toast';
 
+const DEFAULT_TYPE = 'flight';
+
 export default class NewPoint {
   constructor(newPointArguments) {
     const {container, buttonElement, destinationsModel, offersPointModel, changeData} = newPointArguments;
@@ -18,40 +20,39 @@ export default class NewPoint {
     this._creatingFormComponent = null;
     this._createdPoint = {
       basePrice: null,
-      dateFrom: dayjs().startOf('month'),
-      dateTo: dayjs().startOf('month'),
-      type: null,
+      dateFrom: dayjs(),
+      dateTo: dayjs(),
+      type: DEFAULT_TYPE,
       destination: null,
       isFavorite: false,
       offers: [],
     };
-    this._defaultPoint = Object.assign({}, this._createdPoint);
 
-    this._escKeyDownHandler = this._escKeyDownHandler.bind(this);
+    this._creatingFormEscKeyDownHandler = this._creatingFormEscKeyDownHandler.bind(this);
     this._groupTypeChangeHandler = this._groupTypeChangeHandler.bind(this);
-    this._inputEventDestinationChangeHandler = this._inputEventDestinationChangeHandler.bind(this);
+    this._eventDestinationChangeHandler = this._eventDestinationChangeHandler.bind(this);
     this._creatingFormSubmitHandler = this._creatingFormSubmitHandler.bind(this);
-    this._inputOfferClickHandler = this._inputOfferClickHandler.bind(this);
-    this._inputTimeStartChangeHandler = this._inputTimeStartChangeHandler.bind(this);
-    this._inputTimeEndChangeHandler = this._inputTimeEndChangeHandler.bind(this);
-    this._inputBasePriceChangeHandler = this._inputBasePriceChangeHandler.bind(this);
+    this._offerChangeHandler = this._offerChangeHandler.bind(this);
+    this._timeStartInputHandler = this._timeStartInputHandler.bind(this);
+    this._timeEndInputHandler = this._timeEndInputHandler.bind(this);
+    this._basePriceInputHandler = this._basePriceInputHandler.bind(this);
     this._buttonCancelClickHandler = this._buttonCancelClickHandler.bind(this);
   }
 
   init() {
     this._creatingFormComponent = new CreatingFormView(this._destinationsModel, this._offersPointModel);
     this._creatingFormComponent.setGroupTypeChangeHandler(this._groupTypeChangeHandler);
-    this._creatingFormComponent.setInputEventDestinationChangeHandler(this._inputEventDestinationChangeHandler);
-    this._creatingFormComponent.setInputTimeStartChangeHandler(this._inputTimeStartChangeHandler);
-    this._creatingFormComponent.setInputTimeEndChangeHandler(this._inputTimeEndChangeHandler);
+    this._creatingFormComponent.setEventDestinationChangeHandler(this._eventDestinationChangeHandler);
+    this._creatingFormComponent.setTimeStartInputHandler(this._timeStartInputHandler);
+    this._creatingFormComponent.setTimeEndInputHandler(this._timeEndInputHandler);
     this._creatingFormComponent.setCalendarFormInput();
-    this._creatingFormComponent.setInputBasePriceHandler(this._inputBasePriceChangeHandler);
+    this._creatingFormComponent.setBasePriceInputHandler(this._basePriceInputHandler);
     this._creatingFormComponent.setCreatingFormSubmitHandler(this._creatingFormSubmitHandler);
     this._creatingFormComponent.setButtonCancelClickHandler(this._buttonCancelClickHandler);
-
     this._buttonElement.disabled = true;
-    document.addEventListener('keydown', this._escKeyDownHandler);
+    document.addEventListener('keydown', this._creatingFormEscKeyDownHandler);
     render(this._container, this._creatingFormComponent, RenderPosition.AFTERBEGIN);
+    this._creatingFormComponent.setOfferChangeHandler(this._offerChangeHandler);
   }
 
   setViewState(state) {
@@ -70,11 +71,11 @@ export default class NewPoint {
     completelyRemove(this._creatingFormComponent);
     this._creatingFormComponent = null;
     this._buttonElement.disabled = false;
-    document.removeEventListener('keydown', this._escKeyDownHandler);
-    this._createdPoint = this._defaultPoint;
+    document.removeEventListener('keydown', this._creatingFormEscKeyDownHandler);
+    this._createdPoint = this._resetCreatedPointItems();
   }
 
-  _escKeyDownHandler(evt) {
+  _creatingFormEscKeyDownHandler(evt) {
     if (evt.key === 'Escape' || evt.key === 'Esc') {
       evt.preventDefault();
       this.removeCreatingForm();
@@ -102,10 +103,9 @@ export default class NewPoint {
 
     this._createdPoint.offers = [];
     this._createdPoint.type = evt.target.value;
-    this._creatingFormComponent.setInputOfferClickHandler(this._inputOfferClickHandler);
   }
 
-  _inputOfferClickHandler(evt) {
+  _offerChangeHandler(evt) {
     const selectedOfferIndex = this._createdPoint.offers.findIndex((item) => item.title === evt.target.dataset.title);
     if (evt.target.checked && selectedOfferIndex === -1) {
       this._createdPoint.offers.splice(0, 0, {title: evt.target.dataset.title, price: Number(evt.target.dataset.price)});
@@ -114,41 +114,63 @@ export default class NewPoint {
     }
   }
 
-  _inputTimeStartChangeHandler(evt) {
+  _timeStartInputHandler(evt) {
     const endTimeInput = document.querySelector('#event-end-time-1');
     const saveButton = document.querySelector('.event__save-btn');
     const formattedEndTime = dayjs(endTimeInput.value, 'YY/MM/DD HH:mm');
     const formattedStartTime = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
     const diffTime = dayjs(formattedEndTime).diff(formattedStartTime, 'm');
+    this._createdPoint.dateFrom = formattedStartTime;
+    if (!evt.target.value.length || !endTimeInput.value.length) {
+      saveButton.disabled = true;
+      toast('The input date field must not be empty');
+      return;
+    }
     if (diffTime < 0) {
       saveButton.disabled = true;
       toast('Date from shouldn\'t be later than date to');
       return;
     }
-    this._createdPoint.dateFrom = formattedStartTime;
     saveButton.disabled = false;
   }
 
-  _inputTimeEndChangeHandler(evt) {
+  _resetCreatedPointItems() {
+    return {
+      basePrice: null,
+      dateFrom: dayjs(),
+      dateTo: dayjs(),
+      type: DEFAULT_TYPE,
+      destination: null,
+      isFavorite: false,
+      offers: [],
+    };
+  }
+
+  _timeEndInputHandler(evt) {
     const startTimeInput = document.querySelector('#event-start-time-1');
     const saveButton = document.querySelector('.event__save-btn');
     const formattedStartTime = dayjs(startTimeInput.value, 'YY/MM/DD HH:mm');
     const formattedEndTime = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
     const diffTime = dayjs(formattedEndTime).diff(formattedStartTime, 'm');
+    this._createdPoint.dateTo = formattedEndTime;
+    if (!evt.target.value.length || !startTimeInput.value.length) {
+      saveButton.disabled = true;
+      toast('The input date field must not be empty');
+      return;
+    }
     if (diffTime < 0) {
       saveButton.disabled = true;
       toast('Date from shouldn\'t be later than date to');
       return;
     }
-    this._createdPoint.dateTo = formattedEndTime;
     saveButton.disabled = false;
   }
 
-  _inputBasePriceChangeHandler(evt) {
+  _basePriceInputHandler(evt) {
     this._createdPoint.basePrice = Number(evt.target.value);
   }
 
-  _inputEventDestinationChangeHandler(evt) {
+  _eventDestinationChangeHandler(evt) {
     if (this._destinationsModel.isLoading) {
       return;
     }
@@ -169,11 +191,6 @@ export default class NewPoint {
       toast('You can\'t save point offline');
       return;
     }
-    const isNotCompletelyField = Object.values(this._createdPoint).some((value) => value === null);
-    if (isNotCompletelyField) {
-      this.removeCreatingForm();
-      return;
-    }
     this._changeData(
       UserAction.ADD_WAYPOINT,
       UpdateType.MINOR,
@@ -183,7 +200,6 @@ export default class NewPoint {
 
   _buttonCancelClickHandler() {
     this.removeCreatingForm();
+    document.removeEventListener('keydown', this._creatingFormEscKeyDownHandler);
   }
-
-
 }

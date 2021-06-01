@@ -4,7 +4,7 @@ const getOfferTemplate = (typeOffers, isLoading = true, pointOffers) => {
   sectionOffers.classList.remove('visually-hidden');
   availableOffersContainer.innerHTML = '';
   let isSelectedOffer = false;
-  if (typeOffers.length > 0) {
+  if (typeOffers.length) {
     const templates = typeOffers.map(({title, price}) => {
       if (!isLoading) { isSelectedOffer = pointOffers.map((item) => item.title).includes(title); }
       const offerTitle = [title].join('-');

@@ -1,10 +1,12 @@
 import AbstractView from './abstract.js';
+import {filter} from '../utils/filter';
 
 export default class Filter extends AbstractView {
-  constructor(filters, currentFilterType) {
+  constructor(filters, currentFilterType, pointsModel) {
     super();
     this._filters = filters;
     this._currentFilter = currentFilterType;
+    this._pointsModel = pointsModel;
 
     this._filterTypeChangeHandler = this._filterTypeChangeHandler.bind(this);
   }
@@ -37,5 +39,15 @@ export default class Filter extends AbstractView {
   _filterTypeChangeHandler(evt) {
     evt.preventDefault();
     this._callback.filterTypeChange(evt.target.value);
+  }
+
+  setDisabled() {
+    const filterButtons = this.getElement().querySelectorAll('input');
+    const points = this._pointsModel.getDataItems().slice();
+    filterButtons.forEach((filterButton) => {
+      if (!filter[filterButton.value](points).length) {
+        filterButton.disabled = true;
+      }
+    });
   }
 }
