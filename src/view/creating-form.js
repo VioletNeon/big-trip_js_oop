@@ -1,17 +1,32 @@
 import SmartView from './smart.js';
-import {capitalizeFirstLetter, checkOfferTypes} from '../utils/common.js';
+import {capitalizeFirstLetter, checkOfferTypes, isOnline} from '../utils/common.js';
 import {flatpickr, dayjs, changeDateFormat} from '../utils/date.js';
 import he from 'he';
-import {UpdateType, State} from '../utils/const';
+import {UpdateType, State, UserAction} from '../utils/const';
+import {getOfferTemplate} from './get-offer-template';
+import {toast} from '../utils/toast';
+import {getSelectedDestinationData} from '../utils/render';
+import {getDestinationTemplate} from './get-destination-template';
 
 const DEFAULT_TYPE = 'flight';
 
 export default class CreatingForm extends SmartView {
-  constructor(destinationsModel, offersPointModel) {
+  constructor(destinationsModel, offersPointModel, changeData) {
     super();
     this._offersPointModel = offersPointModel;
     this._destinationsModel = destinationsModel;
+    this._changeData = changeData;
     this._datepicker = [];
+    this._createdPoint = {
+      basePrice: null,
+      dateFrom: dayjs(),
+      dateTo: dayjs(),
+      type: DEFAULT_TYPE,
+      destination: null,
+      isFavorite: false,
+      offers: [],
+    };
+
     this._creatingFormSubmitHandler = this._creatingFormSubmitHandler.bind(this);
     this._groupTypeChangeHandler = this._groupTypeChangeHandler.bind(this);
     this._eventDestinationChangeHandler = this._eventDestinationChangeHandler.bind(this);
@@ -121,6 +136,16 @@ export default class CreatingForm extends SmartView {
     }
   }
 
+  setInnerHandlers() {
+    this.getElement().querySelector('.event__type-group').addEventListener('change', this._groupTypeChangeHandler);
+    this.getElement().querySelector('.event__input--destination').addEventListener('change', this._eventDestinationChangeHandler);
+    this.getElement().querySelector('#event-start-time-1').addEventListener('input', this._timeStartInputHandler);
+    this.getElement().querySelector('#event-end-time-1').addEventListener('input', this._timeEndInputHandler);
+    this._setCalendarFormInput();
+    this.getElement().querySelector('.event__input--price').addEventListener('input', this._basePriceInputHandler);
+    this.getElement().querySelector('form').addEventListener('submit', this._creatingFormSubmitHandler);
+  }
+
   setFormState(state) {
     const creatingFormSaveButton = this.getElement().querySelector('.event__save-btn');
     const creatingFormInputs = this.getElement().querySelectorAll('input');
@@ -137,22 +162,7 @@ export default class CreatingForm extends SmartView {
     }
   }
 
-  setCreatingFormSubmitHandler(callback) {
-    this._callback.creatingFormSubmit = callback;
-    this.getElement().querySelector('form').addEventListener('submit', this._creatingFormSubmitHandler);
-  }
-
-  setGroupTypeChangeHandler(callback) {
-    this._callback.groupTypeChange = callback;
-    this.getElement().querySelector('.event__type-group').addEventListener('change', this._groupTypeChangeHandler);
-  }
-
-  setEventDestinationChangeHandler(callback) {
-    this._callback.eventDestinationChange = callback;
-    this.getElement().querySelector('.event__input--destination').addEventListener('change', this._eventDestinationChangeHandler);
-  }
-
-  setCalendarFormInput() {
+  _setCalendarFormInput() {
     if (this._datepicker.length) {
       this._datepicker.forEach((datepicker) => datepicker.destroy());
       this._datepicker = [];
@@ -166,24 +176,8 @@ export default class CreatingForm extends SmartView {
     });
   }
 
-  setOfferChangeHandler(callback) {
-    this._callback.offerChange = callback;
+  setOfferChangeHandler() {
     this.getElement().querySelector('.event__details').addEventListener('change', this._offerChangeHandler);
-  }
-
-  setTimeStartInputHandler(callback) {
-    this._callback.timeStartInput = callback;
-    this.getElement().querySelector('#event-start-time-1').addEventListener('input', this._timeStartInputHandler);
-  }
-
-  setTimeEndInputHandler(callback) {
-    this._callback.timeEndInput = callback;
-    this.getElement().querySelector('#event-end-time-1').addEventListener('input', this._timeEndInputHandler);
-  }
-
-  setBasePriceInputHandler(callback) {
-    this._callback.basePriceInput = callback;
-    this.getElement().querySelector('.event__input--price').addEventListener('input', this._basePriceInputHandler);
   }
 
   setButtonCancelClickHandler(callback) {
@@ -244,31 +238,105 @@ export default class CreatingForm extends SmartView {
 
   _creatingFormSubmitHandler(evt) {
     evt.preventDefault();
-    this._callback.creatingFormSubmit();
+    if (!isOnline()) {
+      toast('You can\'t save point offline');
+      return;
+    }
+    this._changeData(
+      UserAction.ADD_WAYPOINT,
+      UpdateType.MINOR,
+      this._createdPoint,
+    );
   }
 
   _groupTypeChangeHandler(evt) {
-    this._callback.groupTypeChange(evt);
+    if (this._offersPointModel.isLoading) {
+      return;
+    }
+
+    const offers = checkOfferTypes(evt.target.value, this._offersPointModel.getDataItems());
+    getOfferTemplate(offers);
+
+    const eventTypeIcon = this.getElement().querySelector('.event__type-icon');
+    eventTypeIcon.src = `img/icons/${evt.target.value}.png`;
+
+    const typeOutput = this.getElement().querySelector('.event__type-output');
+    typeOutput.textContent = evt.target.value;
+
+    const inputTypeToggle = this.getElement().querySelector('.event__type-toggle');
+    inputTypeToggle.required = false;
+
+    this._createdPoint.offers = [];
+    this._createdPoint.type = evt.target.value;
   }
 
   _eventDestinationChangeHandler(evt) {
-    this._callback.eventDestinationChange(evt);
+    if (this._destinationsModel.isLoading) {
+      return;
+    }
+    const destinations = this._destinationsModel.getDataItems();
+    const isValidDestination = destinations.some(({name}) => name === evt.target.value);
+    if (!isValidDestination) {
+      evt.target.value = '';
+      return;
+    }
+
+    const destination = getSelectedDestinationData(evt.target.value, destinations);
+    getDestinationTemplate(destination);
+    this._createdPoint.destination = Object.assign({}, {name: evt.target.value}, destination);
   }
 
   _offerChangeHandler(evt) {
-    this._callback.offerChange(evt);
+    const selectedOfferIndex = this._createdPoint.offers.findIndex((item) => item.title === evt.target.dataset.title);
+    if (evt.target.checked && selectedOfferIndex === -1) {
+      this._createdPoint.offers.splice(0, 0, {title: evt.target.dataset.title, price: Number(evt.target.dataset.price)});
+    } else if (selectedOfferIndex !== -1) {
+      this._createdPoint.offers.splice(selectedOfferIndex, 1);
+    }
   }
 
   _timeStartInputHandler(evt) {
-    this._callback.timeStartInput(evt);
+    const endTimeInput = this.getElement().querySelector('#event-end-time-1');
+    const saveButton = this.getElement().querySelector('.event__save-btn');
+    const formattedEndTime = dayjs(endTimeInput.value, 'YY/MM/DD HH:mm');
+    const formattedStartTime = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
+    const diffTime = dayjs(formattedEndTime).diff(formattedStartTime, 'm');
+    this._createdPoint.dateFrom = formattedStartTime;
+    if (!evt.target.value.length || !endTimeInput.value.length) {
+      saveButton.disabled = true;
+      toast('The input date field must not be empty');
+      return;
+    }
+    if (diffTime < 0) {
+      saveButton.disabled = true;
+      toast('Date from shouldn\'t be later than date to');
+      return;
+    }
+    saveButton.disabled = false;
   }
 
   _timeEndInputHandler(evt) {
-    this._callback.timeEndInput(evt);
+    const startTimeInput = this.getElement().querySelector('#event-start-time-1');
+    const saveButton = this.getElement().querySelector('.event__save-btn');
+    const formattedStartTime = dayjs(startTimeInput.value, 'YY/MM/DD HH:mm');
+    const formattedEndTime = dayjs(evt.target.value, 'YY/MM/DD HH:mm');
+    const diffTime = dayjs(formattedEndTime).diff(formattedStartTime, 'm');
+    this._createdPoint.dateTo = formattedEndTime;
+    if (!evt.target.value.length || !startTimeInput.value.length) {
+      saveButton.disabled = true;
+      toast('The input date field must not be empty');
+      return;
+    }
+    if (diffTime < 0) {
+      saveButton.disabled = true;
+      toast('Date from shouldn\'t be later than date to');
+      return;
+    }
+    saveButton.disabled = false;
   }
 
   _basePriceInputHandler(evt) {
-    this._callback.basePriceInput(evt);
+    this._createdPoint.basePrice = Number(evt.target.value);
   }
 
   _buttonCancelClickHandler(evt) {
